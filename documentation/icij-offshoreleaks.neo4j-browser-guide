@@ -28,17 +28,17 @@
     <div class="col-md-6 col-sm-12">
       <h4>About this data</h4>
       <div class="panama-quote">
-        <p>The <a target="_blank" href="https://offshoreleaks.icij.org/">ICIJ Offshore Leaks database</a>, which you are working with in Neo4j, 
-          contains information on more than 800,000 offshore entities that are part of the Pandora, Paradise, Panama Papers and the other Offshore Leaks investigations. 
+        <p>The <a target="_blank" href="https://offshoreleaks.icij.org/">ICIJ Offshore Leaks database</a>, which you are working with in Neo4j,
+          contains information on more than 800,000 offshore entities that are part of the Pandora, Paradise, Panama Papers and the other Offshore Leaks investigations.
           The data covers a long time of activities – and links to people and companies in more than 200 countries and territories.</p>
-        <p>The real value of the database is that it <strong>strips away the secrecy</strong> that cloaks companies and 
-          trusts incorporated in tax havens and exposes the people behind them. 
-          This includes, when available, the names of the real owners of those opaque structures. 
-          In all, it reveals more than 500,000 names of people and companies behind secret offshore structures. 
-          They come from leaked records and not a standardized corporate registry, so there may be duplicates. 
+        <p>The real value of the database is that it <strong>strips away the secrecy</strong> that cloaks companies and
+          trusts incorporated in tax havens and exposes the people behind them.
+          This includes, when available, the names of the real owners of those opaque structures.
+          In all, it reveals more than 500,000 names of people and companies behind secret offshore structures.
+          They come from leaked records and not a standardized corporate registry, so there may be duplicates.
           We suggest you confirm the identities of any individuals or entities located in the database based on addresses or other identifiable information.</p>
-        <p><strong>There are legitimate uses for offshore companies and trusts. 
-          We do not intend to suggest or imply that any persons, companies or other entities included in the database have broken the law 
+        <p><strong>There are legitimate uses for offshore companies and trusts.
+          We do not intend to suggest or imply that any persons, companies or other entities included in the database have broken the law
           or otherwise acted improperly. If you find an error in the database please get in touch with ICIJ.</strong></p>
       </div>
     </div>
@@ -60,10 +60,10 @@
     </div>
     <div class="col-md-6 col-sm-6">
       <div class="paragraph">
-        <p>The Offshore Leaks Database was imported into Neo4j to be used by journalists and researchers to take advantage of the connections in the data. 
-          To the left is the basic "property graph" data model. 
-          Each data record is called a "node" representing an entity, intermediary, officer or address. 
-          They're connected to form a "graph" that reveals a complex web of relationships. 
+        <p>The Offshore Leaks Database was imported into Neo4j to be used by journalists and researchers to take advantage of the connections in the data.
+          To the left is the basic "property graph" data model.
+          Each data record is called a "node" representing an entity, intermediary, officer or address.
+          They're connected to form a "graph" that reveals a complex web of relationships.
           To the left you can see a simplified diagram how the nodes connect to each other.</p>
       </div>
 
@@ -100,8 +100,8 @@
     <div class="row-fluid">
       <div class="col-sm-12">
         <div class="paragraph">
-          <p>The Offshore Leaks data exposes a set of connections between people and offshore entities.  
-            Graph databases are the best way to explore the relationships between these people and entities. 
+          <p>The Offshore Leaks data exposes a set of connections between people and offshore entities.
+            Graph databases are the best way to explore the relationships between these people and entities.
             They are much more intuitive to use for this purpose than a SQL database or other types of NoSQL databases.</p>
       </div>
     </div>
@@ -109,11 +109,11 @@
     <div class="row-fluid">
       <div class="col-sm-5">
         <div class="paragraph">
-          <p>For example, let's say we want to discover the shortest paths between two entity officers through a set of <code>Entity</code> or <code>Address</code> nodes.  
+          <p>For example, let's say we want to discover the shortest paths between two entity officers through a set of <code>Entity</code> or <code>Address</code> nodes.
             This is quite easy with Cypher, Neo4j's graph query language.</p>
         </div>
         <pre mode="cypher"  class="highlight pre-scrollable code runnable standalone-example ng-binding"><code class="cypher language-cypher">MATCH (a:Officer),(b:Officer)
-WHERE a.name CONTAINS 'Ross, Jr' 
+WHERE a.name CONTAINS 'Ross, Jr'
   AND b.name CONTAINS 'Grant'
 MATCH p=allShortestPaths((a)-[:officer_of|intermediary_of|registered_address*..10]-(b))
 RETURN p
@@ -139,11 +139,11 @@ LIMIT 50</code></pre>
 <slide class="row-fluid">
   <div class="col-sm-12">
     <h3>Explore the Pandora, Panama, and Paradise Papers Yourself</h3>
-      
+
     </div>
     <div class="row">
       <style type="text/css">
-      .boxes i { 
+      .boxes i {
         display: none;
       }
       .boxes .teaser-4 {

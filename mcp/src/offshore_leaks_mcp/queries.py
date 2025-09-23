@@ -1,6 +1,6 @@
 """Cypher query templates for the offshore leaks database."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 
 class QueryBuilder:
@@ -14,8 +14,8 @@ class QueryBuilder:
 
     @staticmethod
     def build_where_conditions(
-        node_var: str, conditions: Dict[str, Any], prefix: str = "WHERE"
-    ) -> tuple[str, Dict[str, Any]]:
+        node_var: str, conditions: dict[str, Any], prefix: str = "WHERE"
+    ) -> tuple[str, dict[str, Any]]:
         """Build WHERE conditions with parameterized queries."""
         where_parts = []
         parameters = {}
@@ -76,7 +76,7 @@ class OffshoreLeaksQueries:
         source: Optional[str] = None,
         limit: int = 20,
         offset: int = 0,
-    ) -> tuple[str, Dict[str, Any]]:
+    ) -> tuple[str, dict[str, Any]]:
         """Build entity search query."""
         conditions = {}
 
@@ -122,7 +122,7 @@ class OffshoreLeaksQueries:
         source: Optional[str] = None,
         limit: int = 20,
         offset: int = 0,
-    ) -> tuple[str, Dict[str, Any]]:
+    ) -> tuple[str, dict[str, Any]]:
         """Build officer search query."""
         conditions = {}
 
@@ -160,7 +160,7 @@ class OffshoreLeaksQueries:
         source: Optional[str] = None,
         limit: int = 20,
         offset: int = 0,
-    ) -> tuple[str, Dict[str, Any]]:
+    ) -> tuple[str, dict[str, Any]]:
         """Build intermediary search query."""
         conditions = {}
 
@@ -193,7 +193,7 @@ class OffshoreLeaksQueries:
     @staticmethod
     def get_entity_details(
         node_id: str, include_relationships: bool = True
-    ) -> tuple[str, Dict[str, Any]]:
+    ) -> tuple[str, dict[str, Any]]:
         """Build query to get detailed entity information."""
         parameters = {"node_id": node_id}
 
@@ -223,11 +223,11 @@ class OffshoreLeaksQueries:
     @staticmethod
     def get_connections(
         start_node_id: str,
-        relationship_types: Optional[List[str]] = None,
+        relationship_types: Optional[list[str]] = None,
         max_depth: int = 2,
-        node_types: Optional[List[str]] = None,
+        node_types: Optional[list[str]] = None,
         limit: int = 50,
-    ) -> tuple[str, Dict[str, Any]]:
+    ) -> tuple[str, dict[str, Any]]:
         """Build query to explore connections from a starting node."""
         parameters = {
             "start_node_id": start_node_id,
@@ -264,9 +264,9 @@ class OffshoreLeaksQueries:
         return query.strip(), parameters
 
     @staticmethod
-    def get_statistics(stat_type: str = "overview") -> tuple[str, Dict[str, Any]]:
+    def get_statistics(stat_type: str = "overview") -> tuple[str, dict[str, Any]]:
         """Build query for database statistics."""
-        parameters: Dict[str, Any] = {}
+        parameters: dict[str, Any] = {}
 
         if stat_type == "overview":
             query = """
@@ -329,9 +329,9 @@ class OffshoreLeaksQueries:
         start_node_id: str,
         end_node_id: str,
         max_depth: int = 6,
-        relationship_types: Optional[List[str]] = None,
+        relationship_types: Optional[list[str]] = None,
         limit: int = 10,
-    ) -> tuple[str, Dict[str, Any]]:
+    ) -> tuple[str, dict[str, Any]]:
         """Find shortest paths between two nodes."""
         parameters = {
             "start_node_id": start_node_id,
@@ -371,7 +371,7 @@ class OffshoreLeaksQueries:
         max_depth: int = 3,
         min_connections: int = 5,
         limit: int = 20,
-    ) -> tuple[str, Dict[str, Any]]:
+    ) -> tuple[str, dict[str, Any]]:
         """Analyze network patterns around a node."""
         parameters = {
             "node_id": node_id,
@@ -451,11 +451,11 @@ class OffshoreLeaksQueries:
 
     @staticmethod
     def find_common_connections(
-        node_ids: List[str],
-        relationship_types: Optional[List[str]] = None,
+        node_ids: list[str],
+        relationship_types: Optional[list[str]] = None,
         max_depth: int = 2,
         limit: int = 20,
-    ) -> tuple[str, Dict[str, Any]]:
+    ) -> tuple[str, dict[str, Any]]:
         """Find common connections between multiple nodes."""
         if len(node_ids) < 2:
             raise ValueError("At least 2 node IDs required for common connections")
@@ -498,7 +498,7 @@ class OffshoreLeaksQueries:
         date_field: str = "incorporation_date",
         time_window_days: int = 365,
         limit: int = 50,
-    ) -> tuple[str, Dict[str, Any]]:
+    ) -> tuple[str, dict[str, Any]]:
         """Analyze temporal patterns in entity creation."""
         parameters = {
             "node_id": node_id,
@@ -534,10 +534,10 @@ class OffshoreLeaksQueries:
     @staticmethod
     def compliance_risk_analysis(
         node_id: str,
-        risk_jurisdictions: Optional[List[str]] = None,
+        risk_jurisdictions: Optional[list[str]] = None,
         max_depth: int = 3,
         limit: int = 30,
-    ) -> tuple[str, Dict[str, Any]]:
+    ) -> tuple[str, dict[str, Any]]:
         """Analyze compliance risks in entity networks."""
         parameters = {
             "node_id": node_id,

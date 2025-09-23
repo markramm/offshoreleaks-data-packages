@@ -86,7 +86,7 @@ class OffshoreLeaksService:
 
         except ValidationError as e:
             logger.error(f"Invalid search parameters: {e}")
-            raise ValueError(f"Invalid parameters: {e}")
+            raise ValueError(f"Invalid parameters: {e}") from e
         except (DatabaseError, QueryError) as e:
             logger.error(f"Database error during entity search: {e}")
             raise
@@ -142,7 +142,7 @@ class OffshoreLeaksService:
 
         except ValidationError as e:
             logger.error(f"Invalid search parameters: {e}")
-            raise ValueError(f"Invalid parameters: {e}")
+            raise ValueError(f"Invalid parameters: {e}") from e
         except (DatabaseError, QueryError) as e:
             logger.error(f"Database error during officer search: {e}")
             raise
@@ -192,7 +192,7 @@ class OffshoreLeaksService:
 
         except ValidationError as e:
             logger.error(f"Invalid connection parameters: {e}")
-            raise ValueError(f"Invalid parameters: {e}")
+            raise ValueError(f"Invalid parameters: {e}") from e
         except (DatabaseError, QueryError) as e:
             logger.error(f"Database error during connection search: {e}")
             raise
@@ -270,7 +270,7 @@ class OffshoreLeaksService:
 
         except ValidationError as e:
             logger.error(f"Parameter validation error: {e}")
-            raise QueryError(f"Invalid parameters: {e}")
+            raise QueryError(f"Invalid parameters: {e}") from e
         except DatabaseError:
             raise
         except Exception as e:
@@ -340,7 +340,7 @@ class OffshoreLeaksService:
 
         except ValidationError as e:
             logger.error(f"Parameter validation error: {e}")
-            raise QueryError(f"Invalid parameters: {e}")
+            raise QueryError(f"Invalid parameters: {e}") from e
         except DatabaseError:
             raise
         except Exception as e:
@@ -393,7 +393,7 @@ class OffshoreLeaksService:
 
         except ValidationError as e:
             logger.error(f"Parameter validation error: {e}")
-            raise QueryError(f"Invalid parameters: {e}")
+            raise QueryError(f"Invalid parameters: {e}") from e
         except DatabaseError:
             raise
         except Exception as e:
@@ -446,7 +446,7 @@ class OffshoreLeaksService:
 
         except ValidationError as e:
             logger.error(f"Parameter validation error: {e}")
-            raise QueryError(f"Invalid parameters: {e}")
+            raise QueryError(f"Invalid parameters: {e}") from e
         except DatabaseError:
             raise
         except Exception as e:
@@ -501,7 +501,7 @@ class OffshoreLeaksService:
 
         except ValidationError as e:
             logger.error(f"Parameter validation error: {e}")
-            raise QueryError(f"Invalid parameters: {e}")
+            raise QueryError(f"Invalid parameters: {e}") from e
         except DatabaseError:
             raise
         except Exception as e:

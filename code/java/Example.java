@@ -21,7 +21,7 @@ public class Example {
         "RETURN b.name as name LIMIT 20";
 
       var result = session.readTransaction(
-        tx -> tx.run(cypherQuery, 
+        tx -> tx.run(cypherQuery,
                 parameters("name","Ross, Jr. - Wilbur Louis"))
             .list());
 
@@ -32,5 +32,3 @@ public class Example {
     driver.close();
   }
 }
-
-

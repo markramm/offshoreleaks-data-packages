@@ -158,6 +158,10 @@ markers = [
     "integration: marks tests as integration tests",
     "unit: marks tests as unit tests",
     "asyncio: marks tests as async tests",
+    "e2e: marks tests as end-to-end (deselect with '-m \"not e2e\"')",
+    "database: marks tests that require database connection",
+    "api: marks tests that require API server",
+    "cli: marks tests that require CLI tools",
 ]
 
 [tool.coverage.run]

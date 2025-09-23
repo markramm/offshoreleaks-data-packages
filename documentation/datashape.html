@@ -20,15 +20,15 @@
 
 
       <div class="paragraph">
-        <p>The Offshore Leaks Database contains in a structured way the contents of the millions of database files 
+        <p>The Offshore Leaks Database contains in a structured way the contents of the millions of database files
           inside the Pandora, Paradise and Panama Papers leaks and the client databases from the Offshore Leaks investigation.</p>
       </div>
 
       <div class="paragraph">
-        <p>The Offshore Leaks Database was imported into Neo4j to be used by journalists and researchers to take advantage of the connections in the data. 
-          Here you can see the basic "property graph" data model. 
-          Each data record is called a "node" representing an entity, intermediary, officer or address. 
-          They are connected to form a "graph" network that reveals a complex web of relationships. 
+        <p>The Offshore Leaks Database was imported into Neo4j to be used by journalists and researchers to take advantage of the connections in the data.
+          Here you can see the basic "property graph" data model.
+          Each data record is called a "node" representing an entity, intermediary, officer or address.
+          They are connected to form a "graph" network that reveals a complex web of relationships.
           The model diagram shows how the nodes connect to each other.</p>
       </div>
 
@@ -41,7 +41,7 @@
             <p><code>Entity</code> - The offshore legal entity. This could be a company, trust, foundation, or other legal entity created in a low-tax jurisdiction.</p>
           </li>
           <li>
-            <p><code>Officer</code> - A person or company who plays a role in an offshore entity, such as beneficiary, director, or shareholder. 
+            <p><code>Officer</code> - A person or company who plays a role in an offshore entity, such as beneficiary, director, or shareholder.
               The relationships shown in the diagram are just a sample of all the existing ones.</p>
           </li>
           <li>
@@ -130,7 +130,7 @@ ORDER BY frequency DESC LIMIT 20;</code></pre>
 <slide class="row-fluid">
 
   <div class="row">
-    
+
     <div class="col-sm-12">
       <h3>Nodes</h3>
     </div>
@@ -205,8 +205,8 @@ ORDER BY frequency DESC LIMIT 20;</code></pre>
       <div class="listingblock">
       <div class="title">All relationship types in the graph</div>
       <div class="content">
-      <pre mode="cypher"  class="highlight pre-scrollable code runnable standalone-example ng-binding"><code class="cypher language-cypher">MATCH (n)-[r]->(m) 
-WITH labels(n) AS fromLabel,type(r) AS relType, collect(distinct head(labels(m))) AS toLabels, count(*) AS frequency 
+      <pre mode="cypher"  class="highlight pre-scrollable code runnable standalone-example ng-binding"><code class="cypher language-cypher">MATCH (n)-[r]->(m)
+WITH labels(n) AS fromLabel,type(r) AS relType, collect(distinct head(labels(m))) AS toLabels, count(*) AS frequency
 WHERE frequency > 1000
 RETURN fromLabel, relType,toLabels,frequency ORDER BY frequency DESC;</code></pre>
       </div>
@@ -228,7 +228,7 @@ RETURN fromLabel, relType,toLabels,frequency ORDER BY frequency DESC;</code></pr
     </div>
   </div>
   <div class="row">
-    
+
     <div class="col-sm-12">
       <div class="visible-md visible-lg">
         <img style="margin-left:1em;" class="img-responsive img-thumbnail pull-right" src="https://guides.neo4j.com/sandbox/icij-offshoreleaks/img/datamodel.png" alt="data model" width="50%" height="auto">
@@ -429,7 +429,7 @@ RETURN fromLabel, relType,toLabels,frequency ORDER BY frequency DESC;</code></pr
   </div>
 
 </div-->
-	
+
 
   </div>
 </div>
@@ -484,7 +484,7 @@ RETURN fromLabel, relType,toLabels,frequency ORDER BY frequency DESC;</code></pr
 
 
    <h4>Relationships</h4>
-   
+
 
   <div class="ulist">
     <ul>
@@ -528,8 +528,8 @@ RETURN fromLabel, relType,toLabels,frequency ORDER BY frequency DESC;</code></pr
     </div>
   </div-->
 
-  
-	
+
+
   </div>
   </div>
 </slide>
@@ -605,10 +605,10 @@ RETURN fromLabel, relType,toLabels,frequency ORDER BY frequency DESC;</code></pr
   <div class="col-sm-12">
     <h3>Explore the Panama and Paradise Papers Yourself</h3>
     <br/>
-    
-    
-    
-    
+
+
+
+
     <div class="row">
       <div class="col-lg-4">
         <div>
@@ -634,11 +634,11 @@ RETURN fromLabel, relType,toLabels,frequency ORDER BY frequency DESC;</code></pr
           </div>
         </div>
       </div>
-      
+
     <br/>
       </div>
-      
-      
+
+
       <div class="col-lg-8">
         <div class="teaser teaser-3">
           <h3>Investigative Queries</h3>

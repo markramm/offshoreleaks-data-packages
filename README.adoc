@@ -72,12 +72,12 @@ endif::[]
 ifeval::[{use-dump-file} != false]
 ==== Three ways to load the dump file: `{use-dump-file}`
 
-* 1. Neo4j Desktop: 
+* 1. Neo4j Desktop:
 
-    - Add the file into the `Files` section of a project in Neo4j Desktop. 
+    - Add the file into the `Files` section of a project in Neo4j Desktop.
 
 image::{from-file-step-1}[]
-    
+
     - Then choose the option to `Create new DBMS from dump` option from the file options.
 
 image::{from-file-step-2}[]

@@ -3,7 +3,7 @@
 import asyncio
 import logging
 import sys
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 # Check if MCP is available (Python 3.10+)
 try:
@@ -74,7 +74,7 @@ class MCPOffshoreLeaksServer:
         """Set up MCP protocol handlers."""
 
         @self.app.list_tools()
-        async def handle_list_tools() -> List[Tool]:
+        async def handle_list_tools() -> list[Tool]:
             """List available tools for offshore leaks investigation."""
             return [
                 Tool(
@@ -529,8 +529,8 @@ class MCPOffshoreLeaksServer:
 
         @self.app.call_tool()
         async def handle_call_tool(
-            name: str, arguments: Dict[str, Any]
-        ) -> List[TextContent]:
+            name: str, arguments: dict[str, Any]
+        ) -> list[TextContent]:
             """Handle tool calls for offshore leaks investigation."""
             if not self.offshore_server:
                 return [
@@ -610,7 +610,7 @@ class MCPOffshoreLeaksServer:
                 ]
 
         @self.app.list_resources()
-        async def handle_list_resources() -> List[Resource]:
+        async def handle_list_resources() -> list[Resource]:
             """List available resources."""
             return [
                 Resource(
@@ -653,7 +653,7 @@ class MCPOffshoreLeaksServer:
             else:
                 raise ValueError(f"Unknown resource: {uri}")
 
-    def _format_search_results(self, entity_type: str, result) -> List[TextContent]:
+    def _format_search_results(self, entity_type: str, result) -> list[TextContent]:
         """Format search results for display."""
         if result.returned_count == 0:
             return [
@@ -688,7 +688,7 @@ class MCPOffshoreLeaksServer:
 
         return [TextContent(type="text", text=text)]
 
-    def _format_connections_results(self, result) -> List[TextContent]:
+    def _format_connections_results(self, result) -> list[TextContent]:
         """Format connection exploration results."""
         if result.returned_count == 0:
             return [
@@ -718,7 +718,7 @@ class MCPOffshoreLeaksServer:
 
         return [TextContent(type="text", text=text)]
 
-    def _format_statistics_results(self, result) -> List[TextContent]:
+    def _format_statistics_results(self, result) -> list[TextContent]:
         """Format statistics results."""
         text = f"## Database Statistics ({result['stat_type']})\n\n"
 
@@ -745,7 +745,7 @@ class MCPOffshoreLeaksServer:
 
     async def _analyze_network(
         self, center_node_id: str, analysis_depth: int = 2, include_summary: bool = True
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Analyze network patterns around a specific node."""
         # Get connections at specified depth
         connections_result = await self.offshore_server.get_connections(
@@ -792,7 +792,7 @@ class MCPOffshoreLeaksServer:
         analysis["connections"] = connections_result.results
         return analysis
 
-    def _format_network_analysis(self, analysis: Dict[str, Any]) -> List[TextContent]:
+    def _format_network_analysis(self, analysis: dict[str, Any]) -> list[TextContent]:
         """Format network analysis results."""
         text = "## Network Analysis\n\n"
         text += f"**Center Node**: `{analysis['center_node_id']}`\n"
@@ -832,27 +832,27 @@ class MCPOffshoreLeaksServer:
 
         return [TextContent(type="text", text=text)]
 
-    async def _find_shortest_paths(self, **kwargs) -> Dict[str, Any]:
+    async def _find_shortest_paths(self, **kwargs) -> dict[str, Any]:
         """Find shortest paths between two nodes."""
         return await self.offshore_server.find_shortest_paths(**kwargs)
 
-    async def _analyze_network_patterns(self, **kwargs) -> Dict[str, Any]:
+    async def _analyze_network_patterns(self, **kwargs) -> dict[str, Any]:
         """Analyze network patterns around a node."""
         return await self.offshore_server.analyze_network_patterns(**kwargs)
 
-    async def _find_common_connections(self, **kwargs) -> Dict[str, Any]:
+    async def _find_common_connections(self, **kwargs) -> dict[str, Any]:
         """Find common connections between multiple nodes."""
         return await self.offshore_server.find_common_connections(**kwargs)
 
-    async def _temporal_analysis(self, **kwargs) -> Dict[str, Any]:
+    async def _temporal_analysis(self, **kwargs) -> dict[str, Any]:
         """Analyze temporal patterns in entity creation."""
         return await self.offshore_server.temporal_analysis(**kwargs)
 
-    async def _compliance_risk_analysis(self, **kwargs) -> Dict[str, Any]:
+    async def _compliance_risk_analysis(self, **kwargs) -> dict[str, Any]:
         """Analyze compliance risks in entity networks."""
         return await self.offshore_server.compliance_risk_analysis(**kwargs)
 
-    def _format_path_results(self, result: Dict[str, Any]) -> List[TextContent]:
+    def _format_path_results(self, result: dict[str, Any]) -> list[TextContent]:
         """Format shortest path results."""
         text = "## Shortest Paths Analysis\n\n"
         text += f"**Total Paths Found**: {result.get('total_count', 0)}\n"
@@ -880,7 +880,7 @@ class MCPOffshoreLeaksServer:
 
         return [TextContent(type="text", text=text)]
 
-    def _format_pattern_results(self, result: Dict[str, Any]) -> List[TextContent]:
+    def _format_pattern_results(self, result: dict[str, Any]) -> list[TextContent]:
         """Format network pattern analysis results."""
         text = "## Network Pattern Analysis\n\n"
         text += f"**Total Patterns Found**: {result.get('total_count', 0)}\n"
@@ -927,8 +927,8 @@ class MCPOffshoreLeaksServer:
         return [TextContent(type="text", text=text)]
 
     def _format_common_connections_results(
-        self, result: Dict[str, Any]
-    ) -> List[TextContent]:
+        self, result: dict[str, Any]
+    ) -> list[TextContent]:
         """Format common connections results."""
         text = "## Common Connections Analysis\n\n"
         text += f"**Total Common Connections**: {result.get('total_count', 0)}\n"
@@ -959,7 +959,7 @@ class MCPOffshoreLeaksServer:
 
         return [TextContent(type="text", text=text)]
 
-    def _format_temporal_results(self, result: Dict[str, Any]) -> List[TextContent]:
+    def _format_temporal_results(self, result: dict[str, Any]) -> list[TextContent]:
         """Format temporal analysis results."""
         text = "## Temporal Analysis\n\n"
         text += f"**Total Related Entities**: {result.get('total_count', 0)}\n"
@@ -1015,8 +1015,8 @@ class MCPOffshoreLeaksServer:
         return [TextContent(type="text", text=text)]
 
     def _format_risk_analysis_results(
-        self, result: Dict[str, Any]
-    ) -> List[TextContent]:
+        self, result: dict[str, Any]
+    ) -> list[TextContent]:
         """Format compliance risk analysis results."""
         text = "## Compliance Risk Analysis\n\n"
         text += f"**Total Risk Entities Found**: {result.get('total_count', 0)}\n"
@@ -1085,7 +1085,7 @@ class MCPOffshoreLeaksServer:
 
         return [TextContent(type="text", text=text)]
 
-    def _format_export_results(self, result: Dict[str, Any]) -> List[TextContent]:
+    def _format_export_results(self, result: dict[str, Any]) -> list[TextContent]:
         """Format export operation results."""
         if result.get("success"):
             text = "## ✅ Export Successful\n\n"
@@ -1118,7 +1118,7 @@ class MCPOffshoreLeaksServer:
 
         return [TextContent(type="text", text=text)]
 
-    def _format_health_status(self, health: Any) -> List[TextContent]:
+    def _format_health_status(self, health: Any) -> list[TextContent]:
         """Format health status results."""
         # Convert health object to dict if it's a Pydantic model
         if hasattr(health, "dict"):

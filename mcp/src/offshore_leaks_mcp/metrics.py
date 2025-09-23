@@ -6,7 +6,7 @@ import time
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -126,7 +126,7 @@ class MetricsCollector:
         """Record database performance metrics."""
         self.database_metrics.append(metrics)
 
-    def get_query_statistics(self, time_window_hours: int = 1) -> Dict[str, Any]:
+    def get_query_statistics(self, time_window_hours: int = 1) -> dict[str, Any]:
         """Get query performance statistics for a time window."""
         cutoff_time = datetime.now() - timedelta(hours=time_window_hours)
 
@@ -186,7 +186,7 @@ class MetricsCollector:
             ),
         }
 
-    def get_system_performance(self, time_window_hours: int = 1) -> Dict[str, Any]:
+    def get_system_performance(self, time_window_hours: int = 1) -> dict[str, Any]:
         """Get system performance metrics."""
         cutoff_time = datetime.now() - timedelta(hours=time_window_hours)
 
@@ -218,7 +218,7 @@ class MetricsCollector:
             "total_samples": len(recent_metrics),
         }
 
-    def get_database_performance(self) -> Dict[str, Any]:
+    def get_database_performance(self) -> dict[str, Any]:
         """Get database performance metrics."""
         if not self.database_metrics:
             return {"message": "No database metrics available"}
@@ -245,7 +245,7 @@ class MetricsCollector:
             "timestamp": latest.timestamp.isoformat(),
         }
 
-    def get_error_analysis(self, time_window_hours: int = 24) -> Dict[str, Any]:
+    def get_error_analysis(self, time_window_hours: int = 24) -> dict[str, Any]:
         """Get error analysis and patterns."""
         cutoff_time = datetime.now() - timedelta(hours=time_window_hours)
 
@@ -283,7 +283,7 @@ class MetricsCollector:
             "errors_by_hour": dict(error_by_hour),
         }
 
-    def get_comprehensive_report(self) -> Dict[str, Any]:
+    def get_comprehensive_report(self) -> dict[str, Any]:
         """Get a comprehensive performance report."""
         uptime = datetime.now() - self.start_time
 
@@ -472,15 +472,15 @@ class PerformanceMonitor:
         """Record query performance metrics."""
         self.metrics_collector.record_query_completion(metrics)
 
-    def get_performance_report(self) -> Dict[str, Any]:
+    def get_performance_report(self) -> dict[str, Any]:
         """Get comprehensive performance report."""
         return self.metrics_collector.get_comprehensive_report()
 
-    def get_query_statistics(self, time_window_hours: int = 1) -> Dict[str, Any]:
+    def get_query_statistics(self, time_window_hours: int = 1) -> dict[str, Any]:
         """Get query performance statistics."""
         return self.metrics_collector.get_query_statistics(time_window_hours)
 
-    def get_system_performance(self, time_window_hours: int = 1) -> Dict[str, Any]:
+    def get_system_performance(self, time_window_hours: int = 1) -> dict[str, Any]:
         """Get system performance metrics."""
         return self.metrics_collector.get_system_performance(time_window_hours)
 

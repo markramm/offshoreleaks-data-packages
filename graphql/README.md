@@ -45,7 +45,7 @@ This will start a local GraphQL API server at `localhost:4000`.
     officer_of {
       name
       jurisdiction_description
-      
+
     }
   }
 }

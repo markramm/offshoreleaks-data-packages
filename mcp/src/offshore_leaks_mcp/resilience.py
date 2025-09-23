@@ -7,7 +7,7 @@ from collections.abc import Awaitable
 from dataclasses import dataclass
 from enum import Enum
 from functools import wraps
-from typing import Any, Callable, Dict, Optional, TypeVar
+from typing import Any, Callable, Optional, TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -305,7 +305,7 @@ class ResilienceManager:
 
         logger.warning(f"Error recorded: {error_type.value} - {error}")
 
-    def get_error_stats(self) -> Dict[str, Any]:
+    def get_error_stats(self) -> dict[str, Any]:
         """Get error statistics."""
         return {
             "error_counts": {
@@ -351,9 +351,9 @@ class ResilienceManager:
                 self.record_error(e, classified_type)
 
                 if ErrorClassifier.is_retryable(e, classified_type):
-                    raise RetryableError(str(e), classified_type)
+                    raise RetryableError(str(e), classified_type) from e
                 else:
-                    raise NonRetryableError(str(e), classified_type)
+                    raise NonRetryableError(str(e), classified_type) from e
 
         return await retryable_func(*args, **kwargs)
 
@@ -366,7 +366,7 @@ class HealthChecker:
         self.component_status = {}
         self.last_check_times = {}
 
-    async def check_database_health(self, database) -> Dict[str, Any]:
+    async def check_database_health(self, database) -> dict[str, Any]:
         """Check database health."""
         try:
             await database.health_check()
@@ -387,7 +387,7 @@ class HealthChecker:
         self.last_check_times["database"] = time.time()
         return status
 
-    async def check_server_health(self, server) -> Dict[str, Any]:
+    async def check_server_health(self, server) -> dict[str, Any]:
         """Check server health."""
         try:
             status = {
@@ -407,7 +407,7 @@ class HealthChecker:
         self.last_check_times["server"] = time.time()
         return status
 
-    def get_overall_health(self) -> Dict[str, Any]:
+    def get_overall_health(self) -> dict[str, Any]:
         """Get overall system health."""
         all_healthy = all(
             status.get("status") == "healthy"

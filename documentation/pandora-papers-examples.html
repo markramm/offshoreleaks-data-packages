@@ -15,16 +15,16 @@
                 <h3 style="text-align:center; margin-bottom: 1em;">Pandora Papers - The Data Connecting Politicians, Criminals and a Rogue Industry that hides their cash</h3>
               </div>
             </div>
-          
+
             <div class="row">
-          
+
               <div class="col-md-6 col-sm-12">
                 <h4>Pandora Papers: Secrets of the Global Elite</h4>
                 <div class="embed-responsive embed-responsive-16by9">
                   <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/dHAtIFyDB8k?rel=0" frameborder="0" allowfullscreen width="560" height="315"></iframe>
                 </div>
               </div>
-          
+
               <div class="col-md-6 col-sm-12">
                 <h4>About this data</h4>
                 <div class="panama-quote">
@@ -34,17 +34,17 @@
                 </div>
               </div>
             </div>
-          
+
           </slide>
-          
+
           <slide class="row-fluid">
-          
+
             <div class="row">
               <div class="col-sm-12">
                 <h3>The Shape of the Data</h3>
               </div>
             </div>
-          
+
             <div class="row">
               <div class="col-md-6">
                 <img class="img-responsive img-thumbnail" src="https://guides.neo4j.com/sandbox/icij-offshoreleaks/img/datamodel.png" alt="data model">
@@ -53,7 +53,7 @@
                 <div class="paragraph">
                   <p>The Offshore Leaks Database was imported into Neo4j to be used by journalists and researchers to take advantage of the connections in the data. To the left is the basic "property graph" data model. Each data record is called a "node" representing an entity, intermediary, officer or address. They're connected to form a "graph" that reveals a complex web of relationships. To the left you can see a simplified diagram how the nodes connect to each other.</p>
                 </div>
-          
+
                 <div class="paragraph">
                   <p>These are the types of nodes that you will encounter in the data:</p>
                 </div>
@@ -101,7 +101,7 @@
           MATCH p=allShortestPaths((a)-[:officer_of|intermediary_of|registered_address*..10]-(b))
           RETURN p
           LIMIT 50</code></pre>
-          
+
                   <div class="paragraph">
                     <p>To execute this query, please <strong>click</strong> on the statement above to put the query in the query editor above. <br/>Hit the triangular <span class="icon"><i class="fa fa-play-circle"></i></span> button or press <span class="keyseq"><kbd>Ctrl</kbd>+<kbd>Enter</kbd></span> to <strong>run it</strong> and see the resulting visualization.</p>
                   </div>
@@ -113,20 +113,20 @@
               </div>
             </div>
           </div>
-          
+
           </slide>
-          
+
           <slide class="row-fluid">
-          
+
             <div class="row">
               <div class="col-sm-12">
                 <h3>How to ask questions using a query language</h3>
-          
-          
-          
+
+
+
                 <h4>Graph Patterns</h4>
                 <div class="paragraph">
-                  <p>Neo4j’s query language, Cypher, is centered around <strong>graph patterns</strong> which represents entities with parentheses, for example, 
+                  <p>Neo4j’s query language, Cypher, is centered around <strong>graph patterns</strong> which represents entities with parentheses, for example,
                 <code>(e:Entity)</code> and connections with arrows, for example <code>-[:intermediary_of]-&gt;</code>.
                   <code>:Entity</code> and <code>:intermediary_of</code> are the types of the entity and the connection, respectively.
                 </div>
@@ -134,9 +134,9 @@
                   <p>Here is an example pattern: <code>(:Intermediary)-[:intermediary_of]-&gt;(:Entity)</code>.
                   These patterns may be found with the <code>MATCH</code> clause.</p>
                 </div>
-          
-          
-          
+
+
+
                 <h4>Other Clauses</h4>
                 <div class="paragraph">
                   <p>The following clauses may follow a <code>MATCH</code> clause.
@@ -184,7 +184,7 @@
                 </div>
               </div>
             </div>
-          
+
           </slide>
 
         <slide class="row-fluid">
@@ -462,7 +462,7 @@ RETURN path LIMIT 100</code></pre>
                     <h4>2nd degree entities</h4>
                     <div class="content">
 <pre mode="cypher" class="highlight pre-scrollable code runnable standalone-example ng-binding"><code
-        class="cypher language-cypher">MATCH (o:Officer) 
+        class="cypher language-cypher">MATCH (o:Officer)
 WHERE o.name CONTAINS $officer o.sourceID STARTS WITH "Pandora Papers"
 MATCH path = (o)-[]->(:Entity)
       &lt;-[]-(:Officer)-[]-&gt;(:Entity)
@@ -720,7 +720,7 @@ ORDER BY number DESC LIMIT 10</code></pre>
         class="cypher language-cypher">MATCH (a:Address)<-[:registered_address]-(o:Officer),
 (o)--&gt;(e:Entity)&lt;-[:intermediary_of]-(i:Intermediary)
 WHERE a.address CONTAINS '<span valeue-key="city">London</span>' AND a.countries CONTAINS '<span value-key="state">United Kingdom</span>'
-RETURN e.jurisdiction_description AS jurisdiction, count(*) AS number 
+RETURN e.jurisdiction_description AS jurisdiction, count(*) AS number
 ORDER BY number DESC LIMIT 10</code></pre>
                         </div>
                     </div>
@@ -752,7 +752,7 @@ ORDER BY number DESC LIMIT 10</code></pre>
                   class="cypher language-cypher">MATCH (a:Address)<-[:registered_address]-(o:Officer),
 (o)--&gt;(e:Entity)&lt;-[:intermediary_of]-(i:Intermediary)
 WHERE a.address CONTAINS '<span value-key="state">Isle of Man</span>'
-RETURN i.name AS intermediary, count(DISTINCT e) AS number 
+RETURN i.name AS intermediary, count(DISTINCT e) AS number
 ORDER BY number DESC LIMIT 10</code></pre>
                         </div>
                     </div>
@@ -1008,15 +1008,15 @@ ORDER BY count DESC</code></pre>
         </slide>
 
     -->
-    
+
 <slide class="row-fluid">
   <div class="col-sm-12">
     <h3>Explore the Pandora, Panama, and Paradise Papers Yourself</h3>
-      
+
     </div>
     <div class="row">
       <style type="text/css">
-      .boxes i { 
+      .boxes i {
         display: none;
       }
       .boxes .teaser-4 {

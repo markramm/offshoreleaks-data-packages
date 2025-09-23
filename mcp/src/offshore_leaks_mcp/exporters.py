@@ -5,7 +5,7 @@ import json
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 try:
     import pandas as pd
@@ -34,7 +34,7 @@ class DataExporter:
 
     def export_to_json(
         self,
-        data: Dict[str, Any],
+        data: dict[str, Any],
         filename: Optional[str] = None,
         output_dir: str = "exports",
     ) -> str:
@@ -56,7 +56,7 @@ class DataExporter:
 
     def export_to_csv(
         self,
-        data: Dict[str, Any],
+        data: dict[str, Any],
         filename: Optional[str] = None,
         output_dir: str = "exports",
     ) -> str:
@@ -82,7 +82,7 @@ class DataExporter:
 
     def export_to_excel(
         self,
-        data: Dict[str, Any],
+        data: dict[str, Any],
         filename: Optional[str] = None,
         output_dir: str = "exports",
     ) -> str:
@@ -126,8 +126,8 @@ class DataExporter:
 
     def export_network_data(
         self,
-        nodes: List[Dict[str, Any]],
-        edges: List[Dict[str, Any]],
+        nodes: list[dict[str, Any]],
+        edges: list[dict[str, Any]],
         filename: Optional[str] = None,
         output_dir: str = "exports",
         format: str = "json",
@@ -167,7 +167,7 @@ class DataExporter:
 
     def create_investigation_report(
         self,
-        investigation_data: Dict[str, Any],
+        investigation_data: dict[str, Any],
         filename: Optional[str] = None,
         output_dir: str = "exports",
     ) -> str:
@@ -201,7 +201,7 @@ class DataExporter:
 
         return str(file_path)
 
-    def _prepare_export_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _prepare_export_data(self, data: dict[str, Any]) -> dict[str, Any]:
         """Prepare data for export with metadata."""
         export_data = data.copy()
 
@@ -224,7 +224,7 @@ class DataExporter:
 
         return export_data
 
-    def _flatten_for_csv(self, data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _flatten_for_csv(self, data: dict[str, Any]) -> list[dict[str, Any]]:
         """Flatten nested data structures for CSV export."""
         if "results" not in data:
             return []
@@ -237,8 +237,8 @@ class DataExporter:
         return flattened
 
     def _flatten_dict(
-        self, d: Dict[str, Any], parent_key: str = "", sep: str = "_"
-    ) -> Dict[str, Any]:
+        self, d: dict[str, Any], parent_key: str = "", sep: str = "_"
+    ) -> dict[str, Any]:
         """Recursively flatten a nested dictionary."""
         items = []
         for k, v in d.items():
@@ -266,7 +266,7 @@ class DataExporter:
 
         return dict(items)
 
-    def _flatten_statistics(self, stats: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _flatten_statistics(self, stats: dict[str, Any]) -> list[dict[str, Any]]:
         """Flatten statistics data for export."""
         flattened = []
         for category, data in stats.items():
@@ -284,7 +284,7 @@ class DataExporter:
 
         return flattened
 
-    def _export_to_gexf(self, network_data: Dict[str, Any], file_path: Path) -> None:
+    def _export_to_gexf(self, network_data: dict[str, Any], file_path: Path) -> None:
         """Export network data to GEXF format for Gephi."""
         # Basic GEXF implementation
         gexf_content = """<?xml version="1.0" encoding="UTF-8"?>
@@ -325,7 +325,7 @@ class DataExporter:
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(final_content)
 
-    def _export_to_graphml(self, network_data: Dict[str, Any], file_path: Path) -> None:
+    def _export_to_graphml(self, network_data: dict[str, Any], file_path: Path) -> None:
         """Export network data to GraphML format."""
         # Basic GraphML implementation
         graphml_content = """<?xml version="1.0" encoding="UTF-8"?>
@@ -379,8 +379,8 @@ class NetworkVisualizer:
         pass
 
     def prepare_network_data(
-        self, connections_result: Dict[str, Any], include_attributes: bool = True
-    ) -> Dict[str, Any]:
+        self, connections_result: dict[str, Any], include_attributes: bool = True
+    ) -> dict[str, Any]:
         """Prepare network data from connections query result."""
         nodes = []
         edges = []
@@ -418,8 +418,8 @@ class NetworkVisualizer:
         return {"nodes": nodes, "edges": edges}
 
     def create_d3_visualization_data(
-        self, network_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, network_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Create data structure optimized for D3.js visualization."""
         # Convert to D3 format with numeric indices
         nodes = network_data.get("nodes", [])
@@ -454,7 +454,7 @@ class NetworkVisualizer:
             },
         }
 
-    def _get_node_type(self, node: Dict[str, Any]) -> str:
+    def _get_node_type(self, node: dict[str, Any]) -> str:
         """Determine node type from node data."""
         # Simple heuristic based on available fields
         if "jurisdiction" in node:
@@ -470,7 +470,7 @@ class NetworkVisualizer:
 
 # Convenience functions for common export operations
 def export_search_results(
-    results: Dict[str, Any],
+    results: dict[str, Any],
     format: str = "json",
     filename: Optional[str] = None,
     output_dir: str = "exports",
@@ -489,7 +489,7 @@ def export_search_results(
 
 
 def export_network_for_visualization(
-    connections_data: Dict[str, Any],
+    connections_data: dict[str, Any],
     format: str = "json",
     filename: Optional[str] = None,
     output_dir: str = "exports",

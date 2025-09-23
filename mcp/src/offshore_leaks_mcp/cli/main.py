@@ -165,7 +165,7 @@ def search_entities(
 
     if not any([name, jurisdiction, status, country_codes, company_type, source]):
         formatter.print_error("At least one search parameter is required")
-        raise typer.Exit(1) from e
+        raise typer.Exit(1)
 
     async def search(client: OffshoreLeaksClient):
         results = await client.search_entities(
@@ -237,7 +237,7 @@ def search_officers(
 
     if not any([name, countries, country_codes, source]):
         formatter.print_error("At least one search parameter is required")
-        raise typer.Exit(1) from e
+        raise typer.Exit(1)
 
     async def search(client: OffshoreLeaksClient):
         results = await client.search_officers(
@@ -405,7 +405,7 @@ def network_patterns(
 
     if pattern_type not in ["hub", "bridge", "cluster"]:
         formatter.print_error("Pattern type must be one of: hub, bridge, cluster")
-        raise typer.Exit(1) from e
+        raise typer.Exit(1)
 
     async def analyze_patterns(client: OffshoreLeaksClient):
         results = await client.analyze_network_patterns(
