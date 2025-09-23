@@ -38,6 +38,11 @@ dependencies = [
     "pydantic>=2.0.0",
     "anyio>=4.0.0",
     "httpx>=0.25.0",
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "typer>=0.9.0",
+    "rich>=13.0.0",
+    "click>=8.0.0",
 ]
 
 [project.optional-dependencies]
@@ -68,6 +73,9 @@ Documentation = "https://github.com/markramm/offshoreleaks-data-packages/tree/ma
 
 [project.scripts]
 offshore-leaks-mcp = "offshore_leaks_mcp.server:main"
+offshore-leaks-mcp-server = "offshore_leaks_mcp.mcp_server:main"
+offshore-cli = "offshore_leaks_mcp.cli.main:app"
+offshore-api = "offshore_leaks_mcp.api:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/offshore_leaks_mcp"]
@@ -149,6 +157,7 @@ markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
     "unit: marks tests as unit tests",
+    "asyncio: marks tests as async tests",
 ]
 
 [tool.coverage.run]
@@ -160,6 +169,9 @@ source = [
     "src/",
     "*/site-packages/",
 ]
+
+[tool.pytest_asyncio]
+asyncio_mode = "auto"
 
 [tool.coverage.report]
 show_missing = true

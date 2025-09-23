@@ -1,7 +1,7 @@
 """Data models for the offshore leaks MCP server."""
 
 from datetime import date
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
@@ -107,7 +107,7 @@ class Relationship(BaseModel):
     relationship_type: str = Field(alias="type", description="Type of relationship")
     source_node_id: str = Field(description="Source node identifier")
     target_node_id: str = Field(description="Target node identifier")
-    properties: Optional[Dict[str, Any]] = Field(
+    properties: Optional[dict[str, Any]] = Field(
         default=None, description="Additional relationship properties"
     )
 
@@ -173,7 +173,7 @@ class ConnectionsParameters(BaseModel):
     start_node_id: str = Field(
         description="Node ID to start the relationship exploration from"
     )
-    relationship_types: Optional[List[str]] = Field(
+    relationship_types: Optional[list[str]] = Field(
         default=None,
         description="Types of relationships to follow. If empty, follows all relationship types",
     )
@@ -183,7 +183,7 @@ class ConnectionsParameters(BaseModel):
         le=5,
         description="Maximum number of relationship hops to explore",
     )
-    node_types: Optional[List[str]] = Field(
+    node_types: Optional[list[str]] = Field(
         default=None,
         description="Types of nodes to include in results. If empty, includes all node types",
     )
@@ -202,19 +202,32 @@ class SearchResult(BaseModel):
     returned_count: int = Field(description="Number of results in this response")
     offset: int = Field(description="Offset used for this query")
     limit: int = Field(description="Limit used for this query")
-    results: List[Dict[str, Any]] = Field(description="Array of result objects")
+    results: list[dict[str, Any]] = Field(description="Array of result objects")
     query_time_ms: Optional[int] = Field(
         default=None, description="Query execution time in milliseconds"
     )
 
 
 class HealthStatus(BaseModel):
-    """Health check response."""
+    """Health check response with resilience information."""
 
-    status: str = Field(description="Health status (healthy/unhealthy)")
+    status: str = Field(description="Health status (healthy/unhealthy/degraded)")
     database_connected: bool = Field(description="Database connection status")
-    version: str = Field(description="Server version")
-    timestamp: str = Field(description="Health check timestamp")
-    details: Optional[Dict[str, Any]] = Field(
+    database_status: str = Field(
+        default="unknown", description="Database health status"
+    )
+    server_running: bool = Field(description="Server running status")
+    timestamp: Any = Field(description="Health check timestamp")
+    components: dict[str, Any] = Field(
+        default_factory=dict, description="Component health details"
+    )
+    error_counts: dict[str, int] = Field(
+        default_factory=dict, description="Error counts by type"
+    )
+    circuit_breaker_states: dict[str, str] = Field(
+        default_factory=dict, description="Circuit breaker states"
+    )
+    version: str = Field(default="0.1.0", description="Server version")
+    details: Optional[dict[str, Any]] = Field(
         default=None, description="Additional health details"
     )

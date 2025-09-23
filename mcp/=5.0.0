@@ -1,0 +1,7 @@
+Defaulting to user installation because normal site-packages is not writeable
+Collecting neo4j
+  Using cached neo4j-5.28.2-py3-none-any.whl (313 kB)
+Collecting pytz
+  Using cached pytz-2025.2-py2.py3-none-any.whl (509 kB)
+Installing collected packages: pytz, neo4j
+Successfully installed neo4j-5.28.2 pytz-2025.2

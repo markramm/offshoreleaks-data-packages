@@ -323,3 +323,269 @@ class OffshoreLeaksQueries:
             """
 
         return query.strip(), parameters
+
+    @staticmethod
+    def find_shortest_paths(
+        start_node_id: str,
+        end_node_id: str,
+        max_depth: int = 6,
+        relationship_types: Optional[List[str]] = None,
+        limit: int = 10,
+    ) -> tuple[str, Dict[str, Any]]:
+        """Find shortest paths between two nodes."""
+        parameters = {
+            "start_node_id": start_node_id,
+            "end_node_id": end_node_id,
+            "max_depth": max_depth,
+            "limit": limit,
+        }
+
+        # Build relationship type filter
+        rel_filter = ""
+        if relationship_types:
+            rel_types = "|".join(relationship_types)
+            rel_filter = f":{rel_types}"
+
+        query = f"""
+        MATCH (start {{node_id: $start_node_id}}), (end {{node_id: $end_node_id}})
+        MATCH path = shortestPath((start)-[r{rel_filter}*1..$max_depth]-(end))
+        WITH path, relationships(path) as rels, nodes(path) as path_nodes
+        RETURN path,
+               length(path) as path_length,
+               [rel in rels | type(rel)] as relationship_types,
+               [node in path_nodes | {{
+                   node_id: node.node_id,
+                   name: node.name,
+                   labels: labels(node)
+               }}] as path_nodes
+        ORDER BY path_length
+        LIMIT $limit
+        """
+
+        return query.strip(), parameters
+
+    @staticmethod
+    def analyze_network_patterns(
+        node_id: str,
+        pattern_type: str = "hub",
+        max_depth: int = 3,
+        min_connections: int = 5,
+        limit: int = 20,
+    ) -> tuple[str, Dict[str, Any]]:
+        """Analyze network patterns around a node."""
+        parameters = {
+            "node_id": node_id,
+            "max_depth": max_depth,
+            "min_connections": min_connections,
+            "limit": limit,
+        }
+
+        if pattern_type == "hub":
+            # Find nodes with many connections (potential hubs)
+            query = """
+            MATCH (center {node_id: $node_id})
+            MATCH (center)-[*1..$max_depth]-(connected)
+            WITH connected, count(*) as connection_count
+            WHERE connection_count >= $min_connections
+            MATCH (connected)-[r]-(neighbor)
+            RETURN connected,
+                   connection_count,
+                   count(DISTINCT neighbor) as total_neighbors,
+                   collect(DISTINCT type(r)) as relationship_types,
+                   collect(DISTINCT labels(neighbor)[0]) as neighbor_types
+            ORDER BY connection_count DESC
+            LIMIT $limit
+            """
+
+        elif pattern_type == "bridge":
+            # Find nodes that bridge different communities
+            query = """
+            MATCH (center {node_id: $node_id})
+            MATCH path = (center)-[*1..$max_depth]-(bridge)-[*1..2]-(community)
+            WHERE bridge.node_id <> center.node_id
+            WITH bridge, count(DISTINCT community) as communities_connected
+            WHERE communities_connected >= $min_connections
+            MATCH (bridge)-[r]-(neighbor)
+            RETURN bridge,
+                   communities_connected,
+                   count(DISTINCT neighbor) as total_connections,
+                   collect(DISTINCT type(r)) as relationship_types
+            ORDER BY communities_connected DESC
+            LIMIT $limit
+            """
+
+        elif pattern_type == "cluster":
+            # Find tightly connected clusters
+            query = """
+            MATCH (center {node_id: $node_id})
+            MATCH (center)-[*1..$max_depth]-(node1)-[r1]-(node2)-[r2]-(node3)
+            WHERE node1.node_id <> center.node_id
+              AND node2.node_id <> center.node_id
+              AND node3.node_id <> center.node_id
+              AND node1.node_id <> node3.node_id
+            WITH node1, node2, node3, count(*) as cluster_strength
+            WHERE cluster_strength >= $min_connections
+            RETURN [node1, node2, node3] as cluster_nodes,
+                   cluster_strength,
+                   [labels(node1)[0], labels(node2)[0], labels(node3)[0]] as node_types
+            ORDER BY cluster_strength DESC
+            LIMIT $limit
+            """
+
+        else:
+            # Default: general connectivity analysis
+            query = """
+            MATCH (center {node_id: $node_id})
+            MATCH (center)-[r*1..$max_depth]-(connected)
+            WITH connected, length(r) as distance, count(*) as paths_count
+            WHERE paths_count >= $min_connections
+            RETURN connected,
+                   distance,
+                   paths_count,
+                   labels(connected) as node_types
+            ORDER BY paths_count DESC, distance ASC
+            LIMIT $limit
+            """
+
+        return query.strip(), parameters
+
+    @staticmethod
+    def find_common_connections(
+        node_ids: List[str],
+        relationship_types: Optional[List[str]] = None,
+        max_depth: int = 2,
+        limit: int = 20,
+    ) -> tuple[str, Dict[str, Any]]:
+        """Find common connections between multiple nodes."""
+        if len(node_ids) < 2:
+            raise ValueError("At least 2 node IDs required for common connections")
+
+        parameters = {
+            "node_ids": node_ids,
+            "max_depth": max_depth,
+            "limit": limit,
+            "min_connections": len(node_ids),
+        }
+
+        # Build relationship type filter
+        rel_filter = ""
+        if relationship_types:
+            rel_types = "|".join(relationship_types)
+            rel_filter = f":{rel_types}"
+
+        query = f"""
+        UNWIND $node_ids as node_id
+        MATCH (source {{node_id: node_id}})
+        MATCH (source)-[r{rel_filter}*1..$max_depth]-(common)
+        WHERE common.node_id NOT IN $node_ids
+        WITH common, collect(DISTINCT source.node_id) as connected_sources
+        WHERE size(connected_sources) >= $min_connections
+        MATCH (common)-[rel]-(neighbor)
+        RETURN common,
+               connected_sources,
+               size(connected_sources) as connection_count,
+               count(DISTINCT neighbor) as total_neighbors,
+               collect(DISTINCT type(rel)) as relationship_types
+        ORDER BY connection_count DESC, total_neighbors DESC
+        LIMIT $limit
+        """
+
+        return query.strip(), parameters
+
+    @staticmethod
+    def temporal_analysis(
+        node_id: str,
+        date_field: str = "incorporation_date",
+        time_window_days: int = 365,
+        limit: int = 50,
+    ) -> tuple[str, Dict[str, Any]]:
+        """Analyze temporal patterns in entity creation."""
+        parameters = {
+            "node_id": node_id,
+            "time_window_days": time_window_days,
+            "limit": limit,
+        }
+
+        query = f"""
+        MATCH (center {{node_id: $node_id}})
+        WHERE center.{date_field} IS NOT NULL
+        WITH center, date(center.{date_field}) as center_date
+        MATCH (center)-[*1..3]-(related)
+        WHERE related.{date_field} IS NOT NULL
+        WITH center, center_date, related,
+             date(related.{date_field}) as related_date,
+             duration.between(date(center.{date_field}), date(related.{date_field})).days as day_diff
+        WHERE abs(day_diff) <= $time_window_days
+        RETURN related,
+               related_date,
+               day_diff,
+               labels(related) as node_types,
+               CASE
+                   WHEN day_diff < 0 THEN 'before'
+                   WHEN day_diff > 0 THEN 'after'
+                   ELSE 'same_day'
+               END as temporal_relationship
+        ORDER BY abs(day_diff), related.name
+        LIMIT $limit
+        """
+
+        return query.strip(), parameters
+
+    @staticmethod
+    def compliance_risk_analysis(
+        node_id: str,
+        risk_jurisdictions: Optional[List[str]] = None,
+        max_depth: int = 3,
+        limit: int = 30,
+    ) -> tuple[str, Dict[str, Any]]:
+        """Analyze compliance risks in entity networks."""
+        parameters = {
+            "node_id": node_id,
+            "max_depth": max_depth,
+            "limit": limit,
+        }
+
+        # Default high-risk jurisdictions (can be customized)
+        if risk_jurisdictions is None:
+            risk_jurisdictions = [
+                "British Virgin Islands",
+                "Cayman Islands",
+                "Panama",
+                "Seychelles",
+                "Bahamas",
+                "Bermuda",
+            ]
+        parameters["risk_jurisdictions"] = risk_jurisdictions
+
+        query = """
+        MATCH (center {node_id: $node_id})
+        MATCH path = (center)-[*1..$max_depth]-(risky)
+        WHERE risky.jurisdiction IN $risk_jurisdictions
+           OR risky.country_codes IN $risk_jurisdictions
+           OR risky.countries IN $risk_jurisdictions
+        WITH risky, length(path) as distance,
+             CASE
+                 WHEN risky.status = 'Active' THEN 'high'
+                 WHEN risky.status = 'Inactive' THEN 'medium'
+                 ELSE 'low'
+             END as risk_level
+        MATCH (risky)-[r]-(connected)
+        RETURN risky,
+               distance,
+               risk_level,
+               risky.jurisdiction as jurisdiction,
+               count(DISTINCT connected) as connection_count,
+               collect(DISTINCT type(r)) as relationship_types,
+               collect(DISTINCT labels(connected)[0]) as connected_types
+        ORDER BY
+            CASE risk_level
+                WHEN 'high' THEN 1
+                WHEN 'medium' THEN 2
+                ELSE 3
+            END,
+            distance,
+            connection_count DESC
+        LIMIT $limit
+        """
+
+        return query.strip(), parameters

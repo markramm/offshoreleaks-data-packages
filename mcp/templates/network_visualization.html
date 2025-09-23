@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offshore Leaks Network Visualization</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .visualization {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .control-group label {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .control-group input, .control-group select {
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .legend {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .legend h3 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .node {
+            cursor: pointer;
+        }
+
+        .link {
+            stroke: #999;
+            stroke-opacity: 0.6;
+        }
+
+        .node-text {
+            font-size: 12px;
+            fill: #333;
+            pointer-events: none;
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 1000;
+            max-width: 300px;
+        }
+
+        .info-panel {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+
+        .info-panel h3 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Offshore Leaks Network Visualization</h1>
+            <p>Interactive exploration of offshore financial networks</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value" id="node-count">0</div>
+                <div class="stat-label">Nodes</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="link-count">0</div>
+                <div class="stat-label">Connections</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="entity-count">0</div>
+                <div class="stat-label">Entities</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="officer-count">0</div>
+                <div class="stat-label">Officers</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="force-strength">Force Strength:</label>
+                <input type="range" id="force-strength" min="10" max="500" value="100">
+            </div>
+            <div class="control-group">
+                <label for="link-distance">Link Distance:</label>
+                <input type="range" id="link-distance" min="20" max="200" value="80">
+            </div>
+            <div class="control-group">
+                <label for="node-size">Node Size:</label>
+                <input type="range" id="node-size" min="2" max="20" value="8">
+            </div>
+            <div class="control-group">
+                <label for="filter-type">Filter:</label>
+                <select id="filter-type">
+                    <option value="all">All Nodes</option>
+                    <option value="Entity">Entities Only</option>
+                    <option value="Officer">Officers Only</option>
+                    <option value="Intermediary">Intermediaries Only</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="legend">
+            <h3>Node Types</h3>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #007bff;"></div>
+                <span>Entity (Company, Trust, Foundation)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #28a745;"></div>
+                <span>Officer (Individual)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #ffc107;"></div>
+                <span>Intermediary (Law Firm, Bank)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #dc3545;"></div>
+                <span>Address</span>
+            </div>
+        </div>
+
+        <div class="visualization">
+            <svg id="network-svg" width="100%" height="600"></svg>
+        </div>
+
+        <div class="info-panel">
+            <h3>Network Information</h3>
+            <div id="network-info">
+                <p>Load network data to see detailed information about the offshore financial network.</p>
+                <p><strong>Instructions:</strong></p>
+                <ul>
+                    <li>Click and drag nodes to reposition them</li>
+                    <li>Hover over nodes to see detailed information</li>
+                    <li>Use controls above to adjust visualization parameters</li>
+                    <li>Filter by node type to focus on specific entities</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="tooltip" style="display: none;"></div>
+
+    <script>
+        // Network visualization using D3.js
+        class NetworkVisualization {
+            constructor() {
+                this.svg = d3.select("#network-svg");
+                this.width = parseInt(this.svg.style("width"));
+                this.height = parseInt(this.svg.style("height"));
+
+                this.simulation = d3.forceSimulation()
+                    .force("link", d3.forceLink().id(d => d.id).distance(80))
+                    .force("charge", d3.forceManyBody().strength(-100))
+                    .force("center", d3.forceCenter(this.width / 2, this.height / 2));
+
+                this.tooltip = d3.select(".tooltip");
+                this.nodeColorScale = d3.scaleOrdinal()
+                    .domain(["Entity", "Officer", "Intermediary", "Address"])
+                    .range(["#007bff", "#28a745", "#ffc107", "#dc3545"]);
+
+                this.setupControls();
+                this.loadSampleData();
+            }
+
+            setupControls() {
+                // Force strength control
+                d3.select("#force-strength").on("input", (event) => {
+                    this.simulation.force("charge").strength(-event.target.value);
+                    this.simulation.alpha(0.3).restart();
+                });
+
+                // Link distance control
+                d3.select("#link-distance").on("input", (event) => {
+                    this.simulation.force("link").distance(event.target.value);
+                    this.simulation.alpha(0.3).restart();
+                });
+
+                // Filter control
+                d3.select("#filter-type").on("change", (event) => {
+                    this.applyFilter(event.target.value);
+                });
+
+                // Node size control
+                d3.select("#node-size").on("input", (event) => {
+                    const size = event.target.value;
+                    this.svg.selectAll(".node")
+                        .attr("r", size);
+                });
+            }
+
+            loadSampleData() {
+                // Sample data structure - replace with actual network data
+                const sampleData = {
+                    nodes: [
+                        { id: "entity1", name: "Offshore Corp Ltd", type: "Entity", jurisdiction: "BVI", status: "Active" },
+                        { id: "entity2", name: "Shell Company Inc", type: "Entity", jurisdiction: "Cayman Islands", status: "Active" },
+                        { id: "officer1", name: "John Smith", type: "Officer", countries: "UK", role: "Director" },
+                        { id: "officer2", name: "Jane Doe", type: "Officer", countries: "USA", role: "Shareholder" },
+                        { id: "intermediary1", name: "Global Law Firm", type: "Intermediary", countries: "Singapore" }
+                    ],
+                    links: [
+                        { source: "officer1", target: "entity1", type: "officer_of" },
+                        { source: "officer2", target: "entity1", type: "shareholder_of" },
+                        { source: "entity1", target: "entity2", type: "owns" },
+                        { source: "intermediary1", target: "entity1", type: "incorporates" },
+                        { source: "intermediary1", target: "entity2", type: "incorporates" }
+                    ]
+                };
+
+                this.renderNetwork(sampleData);
+            }
+
+            renderNetwork(data) {
+                // Clear previous content
+                this.svg.selectAll("*").remove();
+
+                // Update statistics
+                this.updateStatistics(data);
+
+                // Create links
+                const link = this.svg.append("g")
+                    .attr("class", "links")
+                    .selectAll("line")
+                    .data(data.links)
+                    .enter().append("line")
+                    .attr("class", "link")
+                    .attr("stroke-width", 2);
+
+                // Create nodes
+                const node = this.svg.append("g")
+                    .attr("class", "nodes")
+                    .selectAll("circle")
+                    .data(data.nodes)
+                    .enter().append("circle")
+                    .attr("class", "node")
+                    .attr("r", 8)
+                    .attr("fill", d => this.nodeColorScale(d.type))
+                    .call(d3.drag()
+                        .on("start", (event, d) => this.dragstarted(event, d))
+                        .on("drag", (event, d) => this.dragged(event, d))
+                        .on("end", (event, d) => this.dragended(event, d)));
+
+                // Add labels
+                const labels = this.svg.append("g")
+                    .attr("class", "labels")
+                    .selectAll("text")
+                    .data(data.nodes)
+                    .enter().append("text")
+                    .attr("class", "node-text")
+                    .attr("dx", 12)
+                    .attr("dy", 4)
+                    .text(d => d.name);
+
+                // Add tooltips
+                node.on("mouseover", (event, d) => this.showTooltip(event, d))
+                    .on("mouseout", () => this.hideTooltip());
+
+                // Update simulation
+                this.simulation
+                    .nodes(data.nodes)
+                    .on("tick", () => {
+                        link
+                            .attr("x1", d => d.source.x)
+                            .attr("y1", d => d.source.y)
+                            .attr("x2", d => d.target.x)
+                            .attr("y2", d => d.target.y);
+
+                        node
+                            .attr("cx", d => d.x)
+                            .attr("cy", d => d.y);
+
+                        labels
+                            .attr("x", d => d.x)
+                            .attr("y", d => d.y);
+                    });
+
+                this.simulation.force("link")
+                    .links(data.links);
+
+                this.simulation.alpha(1).restart();
+            }
+
+            updateStatistics(data) {
+                const nodeCount = data.nodes.length;
+                const linkCount = data.links.length;
+                const entityCount = data.nodes.filter(n => n.type === "Entity").length;
+                const officerCount = data.nodes.filter(n => n.type === "Officer").length;
+
+                d3.select("#node-count").text(nodeCount);
+                d3.select("#link-count").text(linkCount);
+                d3.select("#entity-count").text(entityCount);
+                d3.select("#officer-count").text(officerCount);
+            }
+
+            showTooltip(event, d) {
+                let tooltipContent = `<strong>${d.name}</strong><br>`;
+                tooltipContent += `Type: ${d.type}<br>`;
+
+                if (d.jurisdiction) tooltipContent += `Jurisdiction: ${d.jurisdiction}<br>`;
+                if (d.status) tooltipContent += `Status: ${d.status}<br>`;
+                if (d.countries) tooltipContent += `Countries: ${d.countries}<br>`;
+                if (d.role) tooltipContent += `Role: ${d.role}<br>`;
+
+                this.tooltip
+                    .html(tooltipContent)
+                    .style("display", "block")
+                    .style("left", (event.pageX + 10) + "px")
+                    .style("top", (event.pageY - 10) + "px");
+            }
+
+            hideTooltip() {
+                this.tooltip.style("display", "none");
+            }
+
+            applyFilter(filterType) {
+                const nodes = this.svg.selectAll(".node");
+                const labels = this.svg.selectAll(".node-text");
+
+                if (filterType === "all") {
+                    nodes.style("opacity", 1);
+                    labels.style("opacity", 1);
+                } else {
+                    nodes.style("opacity", d => d.type === filterType ? 1 : 0.2);
+                    labels.style("opacity", d => d.type === filterType ? 1 : 0.2);
+                }
+            }
+
+            dragstarted(event, d) {
+                if (!event.active) this.simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            }
+
+            dragged(event, d) {
+                d.fx = event.x;
+                d.fy = event.y;
+            }
+
+            dragended(event, d) {
+                if (!event.active) this.simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+            }
+
+            // Method to load external data
+            loadNetworkData(data) {
+                this.renderNetwork(data);
+            }
+        }
+
+        // Initialize visualization when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            window.networkViz = new NetworkVisualization();
+
+            // Instructions for loading data
+            document.getElementById('network-info').innerHTML = `
+                <p><strong>Sample Network Loaded</strong></p>
+                <p>This is a sample offshore network showing typical relationships between entities, officers, and intermediaries.</p>
+                <p><strong>To load your own data:</strong></p>
+                <ul>
+                    <li>Export network data from the MCP server using <code>export_network_visualization</code></li>
+                    <li>Use format "d3" to get data compatible with this visualization</li>
+                    <li>Replace the sample data in this file with your exported data</li>
+                </ul>
+                <p><strong>Features:</strong></p>
+                <ul>
+                    <li>Interactive node positioning</li>
+                    <li>Hover tooltips with detailed information</li>
+                    <li>Adjustable force simulation parameters</li>
+                    <li>Node type filtering</li>
+                    <li>Color-coded node types</li>
+                </ul>
+            `;
+        });
+
+        // Function to load data from exported JSON
+        function loadExportedData(jsonData) {
+            if (window.networkViz) {
+                window.networkViz.loadNetworkData(jsonData);
+            }
+        }
+    </script>
+</body>
+</html>

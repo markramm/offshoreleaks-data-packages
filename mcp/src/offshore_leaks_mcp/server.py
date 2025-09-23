@@ -3,20 +3,16 @@
 import asyncio
 import logging
 from datetime import datetime
-from typing import Any, Dict, Optional
-
-from pydantic import ValidationError
+from typing import Any, Optional
 
 from .config import Config, load_config
-from .database import DatabaseError, Neo4jDatabase, QueryError
+from .database import Neo4jDatabase
 from .models import (
-    ConnectionsParameters,
-    EntitySearchParameters,
     HealthStatus,
-    OfficerSearchParameters,
     SearchResult,
 )
-from .queries import OffshoreLeaksQueries
+from .resilience import GracefulShutdown, HealthChecker, resilience_manager
+from .service import OffshoreLeaksService
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +24,16 @@ class OffshoreLeaksServer:
         """Initialize the server with configuration."""
         self.config = config or load_config()
         self.database = Neo4jDatabase(self.config.neo4j)
+        self.service = OffshoreLeaksService(
+            self.database, self.config.server.query_timeout
+        )
         self._running = False
+        self.health_checker = HealthChecker()
+        self.shutdown_handler = GracefulShutdown()
+
+        # Add shutdown hooks
+        self.shutdown_handler.add_shutdown_hook(self._shutdown_database)
+        self.shutdown_handler.add_shutdown_hook(self._cleanup_resources)
 
     async def start(self) -> None:
         """Start the server and establish database connection."""
@@ -45,11 +50,71 @@ class OffshoreLeaksServer:
     async def stop(self) -> None:
         """Stop the server and close database connection."""
         try:
-            await self.database.disconnect()
+            await self.shutdown_handler.shutdown()
             self._running = False
             logger.info("Offshore Leaks MCP Server stopped")
         except Exception as e:
             logger.error(f"Error stopping server: {e}")
+
+    async def _shutdown_database(self) -> None:
+        """Shutdown hook for database cleanup."""
+        try:
+            await self.database.disconnect()
+            logger.info("Database connection closed")
+        except Exception as e:
+            logger.error(f"Error closing database connection: {e}")
+
+    async def _cleanup_resources(self) -> None:
+        """Shutdown hook for general resource cleanup."""
+        try:
+            # Log final error statistics
+            error_stats = resilience_manager.get_error_stats()
+            logger.info(f"Final error statistics: {error_stats}")
+        except Exception as e:
+            logger.error(f"Error during resource cleanup: {e}")
+
+    async def get_enhanced_health_status(self) -> HealthStatus:
+        """Get comprehensive health status with resilience information."""
+        try:
+            # Check database health
+            db_health = await self.health_checker.check_database_health(self.database)
+
+            # Check server health
+            server_health = await self.health_checker.check_server_health(self)
+
+            # Get overall health
+            overall_health = self.health_checker.get_overall_health()
+
+            # Get resilience statistics
+            error_stats = resilience_manager.get_error_stats()
+
+            return HealthStatus(
+                status=overall_health["status"],
+                timestamp=datetime.now(),
+                database_connected=db_health.get("connected", False),
+                database_status=db_health.get("status", "unknown"),
+                server_running=server_health.get("running", False),
+                components={
+                    "database": db_health,
+                    "server": server_health,
+                    "resilience": error_stats,
+                },
+                error_counts=error_stats.get("error_counts", {}),
+                circuit_breaker_states=error_stats.get("circuit_breaker_states", {}),
+            )
+
+        except Exception as e:
+            logger.error(f"Enhanced health check failed: {e}")
+            return HealthStatus(
+                status="unhealthy",
+                timestamp=datetime.now(),
+                database_connected=False,
+                database_status="unknown",
+                server_running=self._running,
+                components={"error": str(e)},
+                error_counts={},
+                circuit_breaker_states={},
+            )
 
     async def health_check(self) -> HealthStatus:
         """Perform health check on server and database."""
@@ -68,6 +133,7 @@ class OffshoreLeaksServer:
             return HealthStatus(
                 status=status,
                 database_connected=database_connected,
+                server_running=self._running,
                 version=self.config.server.version,
                 timestamp=datetime.utcnow().isoformat(),
                 details=details,
@@ -78,6 +144,7 @@ class OffshoreLeaksServer:
             return HealthStatus(
                 status="unhealthy",
                 database_connected=False,
+                server_running=self._running,
                 version=self.config.server.version,
                 timestamp=datetime.utcnow().isoformat(),
                 details={"error": str(e)},
@@ -85,201 +152,143 @@ class OffshoreLeaksServer:
 
     async def search_entities(self, **kwargs: Any) -> SearchResult:
         """Search for offshore entities."""
-        try:
-            # Validate parameters
-            params = EntitySearchParameters(**kwargs)
-
-            # Build and execute query
-            query, query_params = OffshoreLeaksQueries.search_entities(
-                name=params.name,
-                jurisdiction=params.jurisdiction,
-                country_codes=params.country_codes,
-                company_type=params.company_type,
-                status=params.status,
-                incorporation_date_from=(
-                    params.incorporation_date_from.isoformat()
-                    if params.incorporation_date_from
-                    else None
-                ),
-                incorporation_date_to=(
-                    params.incorporation_date_to.isoformat()
-                    if params.incorporation_date_to
-                    else None
-                ),
-                source=params.source,
-                limit=params.limit,
-                offset=params.offset,
-            )
-
-            result = await self.database.execute_query(
-                query,
-                query_params,
-                timeout=self.config.server.query_timeout,
-            )
-
-            # Count total results (without pagination)
-            count_query = query.replace("RETURN e", "RETURN count(e) as total").split(
-                "SKIP"
-            )[0]
-            count_result = await self.database.execute_query(
-                count_query,
-                {k: v for k, v in query_params.items() if k not in ["limit", "offset"]},
-            )
-            total_count = (
-                count_result.records[0]["total"] if count_result.records else 0
-            )
-
-            # Format results
-            entities = [record["e"] for record in result.records]
-
-            return SearchResult(
-                total_count=total_count,
-                returned_count=len(entities),
-                offset=params.offset,
-                limit=params.limit,
-                results=entities,
-                query_time_ms=result.query_time_ms,
-            )
-
-        except ValidationError as e:
-            logger.error(f"Invalid search parameters: {e}")
-            raise ValueError(f"Invalid parameters: {e}")
-        except (DatabaseError, QueryError) as e:
-            logger.error(f"Database error during entity search: {e}")
-            raise
-        except Exception as e:
-            logger.error(f"Unexpected error during entity search: {e}")
-            raise
+        return await self.service.search_entities(**kwargs)
 
     async def search_officers(self, **kwargs: Any) -> SearchResult:
         """Search for officers."""
-        try:
-            # Validate parameters
-            params = OfficerSearchParameters(**kwargs)
-
-            # Build and execute query
-            query, query_params = OffshoreLeaksQueries.search_officers(
-                name=params.name,
-                countries=params.countries,
-                country_codes=params.country_codes,
-                source=params.source,
-                limit=params.limit,
-                offset=params.offset,
-            )
-
-            result = await self.database.execute_query(
-                query,
-                query_params,
-                timeout=self.config.server.query_timeout,
-            )
-
-            # Count total results (without pagination)
-            count_query = query.replace("RETURN o", "RETURN count(o) as total").split(
-                "SKIP"
-            )[0]
-            count_result = await self.database.execute_query(
-                count_query,
-                {k: v for k, v in query_params.items() if k not in ["limit", "offset"]},
-            )
-            total_count = (
-                count_result.records[0]["total"] if count_result.records else 0
-            )
-
-            # Format results
-            officers = [record["o"] for record in result.records]
-
-            return SearchResult(
-                total_count=total_count,
-                returned_count=len(officers),
-                offset=params.offset,
-                limit=params.limit,
-                results=officers,
-                query_time_ms=result.query_time_ms,
-            )
-
-        except ValidationError as e:
-            logger.error(f"Invalid search parameters: {e}")
-            raise ValueError(f"Invalid parameters: {e}")
-        except (DatabaseError, QueryError) as e:
-            logger.error(f"Database error during officer search: {e}")
-            raise
-        except Exception as e:
-            logger.error(f"Unexpected error during officer search: {e}")
-            raise
+        return await self.service.search_officers(**kwargs)
 
     async def get_connections(self, **kwargs: Any) -> SearchResult:
         """Explore connections from a starting node."""
-        try:
-            # Validate parameters
-            params = ConnectionsParameters(**kwargs)
+        return await self.service.get_connections(**kwargs)
 
-            # Build and execute query
-            query, query_params = OffshoreLeaksQueries.get_connections(
-                start_node_id=params.start_node_id,
-                relationship_types=params.relationship_types,
-                max_depth=params.max_depth,
-                node_types=params.node_types,
-                limit=params.limit,
-            )
-
-            result = await self.database.execute_query(
-                query,
-                query_params,
-                timeout=self.config.server.query_timeout,
-            )
-
-            # Format results
-            connections = []
-            for record in result.records:
-                connection = {
-                    "node": record["connected"],
-                    "distance": record["distance"],
-                    "first_relationship": record["first_relationship"],
-                }
-                connections.append(connection)
-
-            return SearchResult(
-                total_count=len(connections),  # For connections, we return all found
-                returned_count=len(connections),
-                offset=0,
-                limit=params.limit,
-                results=connections,
-                query_time_ms=result.query_time_ms,
-            )
-
-        except ValidationError as e:
-            logger.error(f"Invalid connection parameters: {e}")
-            raise ValueError(f"Invalid parameters: {e}")
-        except (DatabaseError, QueryError) as e:
-            logger.error(f"Database error during connection search: {e}")
-            raise
-        except Exception as e:
-            logger.error(f"Unexpected error during connection search: {e}")
-            raise
-
-    async def get_statistics(self, stat_type: str = "overview") -> Dict[str, Any]:
+    async def get_statistics(self, stat_type: str = "overview") -> dict[str, Any]:
         """Get database statistics and metadata."""
-        try:
-            query, query_params = OffshoreLeaksQueries.get_statistics(stat_type)
+        return await self.service.get_statistics(stat_type)
 
-            result = await self.database.execute_query(
-                query,
-                query_params,
-                timeout=self.config.server.query_timeout,
-            )
+    async def find_shortest_paths(
+        self,
+        start_node_id: str,
+        end_node_id: str,
+        max_depth: int = 6,
+        relationship_types: Optional[list] = None,
+        limit: int = 10,
+    ) -> SearchResult:
+        """Find shortest paths between two nodes."""
+        return await self.service.find_shortest_paths(
+            start_node_id=start_node_id,
+            end_node_id=end_node_id,
+            max_depth=max_depth,
+            relationship_types=relationship_types,
+            limit=limit,
+        )
 
-            return {
-                "stat_type": stat_type,
-                "results": result.records,
-                "query_time_ms": result.query_time_ms,
-            }
+    async def analyze_network_patterns(
+        self,
+        node_id: str,
+        pattern_type: str = "hub",
+        max_depth: int = 3,
+        min_connections: int = 5,
+        limit: int = 20,
+    ) -> SearchResult:
+        """Analyze network patterns around a node."""
+        return await self.service.analyze_network_patterns(
+            node_id=node_id,
+            pattern_type=pattern_type,
+            max_depth=max_depth,
+            min_connections=min_connections,
+            limit=limit,
+        )
 
-        except (DatabaseError, QueryError) as e:
-            logger.error(f"Database error during statistics query: {e}")
-            raise
-        except Exception as e:
-            logger.error(f"Unexpected error during statistics query: {e}")
-            raise
+    async def find_common_connections(
+        self,
+        node_ids: list,
+        relationship_types: Optional[list] = None,
+        max_depth: int = 2,
+        limit: int = 20,
+    ) -> SearchResult:
+        """Find common connections between multiple nodes."""
+        return await self.service.find_common_connections(
+            node_ids=node_ids,
+            relationship_types=relationship_types,
+            max_depth=max_depth,
+            limit=limit,
+        )
+
+    async def temporal_analysis(
+        self,
+        node_id: str,
+        date_field: str = "incorporation_date",
+        time_window_days: int = 365,
+        limit: int = 50,
+    ) -> SearchResult:
+        """Analyze temporal patterns in entity creation."""
+        return await self.service.temporal_analysis(
+            node_id=node_id,
+            date_field=date_field,
+            time_window_days=time_window_days,
+            limit=limit,
+        )
+
+    async def compliance_risk_analysis(
+        self,
+        node_id: str,
+        risk_jurisdictions: Optional[list] = None,
+        max_depth: int = 3,
+        limit: int = 30,
+    ) -> SearchResult:
+        """Analyze compliance risks in entity networks."""
+        return await self.service.compliance_risk_analysis(
+            node_id=node_id,
+            risk_jurisdictions=risk_jurisdictions,
+            max_depth=max_depth,
+            limit=limit,
+        )
+
+    async def export_results(
+        self,
+        data: dict[str, Any],
+        format: str = "json",
+        filename: Optional[str] = None,
+        output_dir: str = "exports",
+        include_metadata: bool = True,
+    ) -> dict[str, Any]:
+        """Export investigation results to various formats."""
+        return await self.service.export_results(
+            data=data,
+            format=format,
+            filename=filename,
+            output_dir=output_dir,
+            include_metadata=include_metadata,
+        )
+
+    async def export_network_visualization(
+        self,
+        connections_data: dict[str, Any],
+        format: str = "json",
+        filename: Optional[str] = None,
+        output_dir: str = "exports",
+    ) -> dict[str, Any]:
+        """Export network data for visualization tools."""
+        return await self.service.export_network_visualization(
+            connections_data=connections_data,
+            format=format,
+            filename=filename,
+            output_dir=output_dir,
+        )
+
+    async def create_investigation_report(
+        self,
+        investigation_data: dict[str, Any],
+        filename: Optional[str] = None,
+        output_dir: str = "exports",
+    ) -> dict[str, Any]:
+        """Create a comprehensive investigation report."""
+        return await self.service.create_investigation_report(
+            investigation_data=investigation_data,
+            filename=filename,
+            output_dir=output_dir,
+        )
 
     @property
     def is_running(self) -> bool:

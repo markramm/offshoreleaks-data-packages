@@ -41,6 +41,7 @@ async def test_server_initialization(mock_config: Config) -> None:
     assert server.config == mock_config
     assert not server.is_running
     assert server.database is not None
+    assert server.service is not None  # Test service layer initialization
 
 
 @pytest.mark.asyncio
@@ -88,7 +89,7 @@ async def test_server_stop(server: OffshoreLeaksServer) -> None:
 
 
 @pytest.mark.asyncio
-async def test_health_check_healthy(server: OffshoreLeaksServer) -> None:
+async def test_health_check_healthy(server: OffshoreLeaksServer, no_resilience) -> None:
     """Test health check when database is healthy."""
     mock_db_health = {
         "status": "healthy",
@@ -116,7 +117,9 @@ async def test_health_check_healthy(server: OffshoreLeaksServer) -> None:
 
 
 @pytest.mark.asyncio
-async def test_health_check_unhealthy(server: OffshoreLeaksServer) -> None:
+async def test_health_check_unhealthy(
+    server: OffshoreLeaksServer, no_resilience
+) -> None:
     """Test health check when database is unhealthy."""
     with (
         patch.object(server.database, "_connected", False),
