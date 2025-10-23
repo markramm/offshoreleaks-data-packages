@@ -1,52 +1,16 @@
 """Tests for the offshore leaks FastAPI REST API."""
 
-from unittest.mock import MagicMock
-
 import pytest
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
 
 from offshore_leaks_mcp.api import app, get_config, get_database, get_service
-from offshore_leaks_mcp.config import Config, Neo4jConfig, ServerConfig
-from offshore_leaks_mcp.database import DatabaseError, Neo4jDatabase, QueryError
+from offshore_leaks_mcp.database import DatabaseError, QueryError
 from offshore_leaks_mcp.models import SearchResult
-from offshore_leaks_mcp.service import OffshoreLeaksService
 
 
 @pytest.fixture
-def mock_service():
-    """Create a mock service for testing."""
-    service = MagicMock(spec=OffshoreLeaksService)
-    return service
-
-
-@pytest.fixture
-def mock_database():
-    """Create a mock database for testing."""
-    database = MagicMock(spec=Neo4jDatabase)
-    database.is_connected = True
-    return database
-
-
-@pytest.fixture
-def mock_config():
-    """Create a mock config for testing."""
-    neo4j_config = Neo4jConfig(
-        uri="bolt://localhost:7687",
-        user="neo4j",
-        password="test_password",
-        database="test_db",
-    )
-    server_config = ServerConfig(
-        name="test-server",
-        version="0.1.0",
-        debug=True,
-    )
-    return Config(neo4j=neo4j_config, server=server_config)
-
-
-@pytest.fixture
-def client(mock_service, mock_database, mock_config, no_resilience):
+def client(mock_service, mock_database, mock_config, mock_load_config, mock_neo4j_init, mock_service_init):
     """Create a test client with mocked dependencies."""
 
     def get_mock_service():
