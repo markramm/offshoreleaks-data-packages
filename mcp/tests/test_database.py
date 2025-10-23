@@ -130,9 +130,20 @@ async def test_execute_query_success(database: Neo4jDatabase, no_resilience) -> 
     mock_record2.data.return_value = {"name": "Entity 2"}
 
     mock_result.__iter__.return_value = [mock_record1, mock_record2]
-    mock_result.summary.return_value = mock_summary
+    mock_result.consume.return_value = mock_summary
     mock_summary.query_type = "r"
-    mock_summary.counters = {}
+    mock_summary.counters = MagicMock()
+    mock_summary.counters.nodes_created = 0
+    mock_summary.counters.nodes_deleted = 0
+    mock_summary.counters.relationships_created = 0
+    mock_summary.counters.relationships_deleted = 0
+    mock_summary.counters.properties_set = 0
+    mock_summary.counters.labels_added = 0
+    mock_summary.counters.labels_removed = 0
+    mock_summary.counters.indexes_added = 0
+    mock_summary.counters.indexes_removed = 0
+    mock_summary.counters.constraints_added = 0
+    mock_summary.counters.constraints_removed = 0
     mock_summary.result_available_after = 10
     mock_summary.result_consumed_after = 20
 

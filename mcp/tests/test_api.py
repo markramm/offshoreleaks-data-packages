@@ -2,7 +2,7 @@
 
 import pytest
 from fastapi.testclient import TestClient
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 
 from offshore_leaks_mcp.api import app, get_config, get_database, get_service
 from offshore_leaks_mcp.database import DatabaseError, QueryError
@@ -10,7 +10,14 @@ from offshore_leaks_mcp.models import SearchResult
 
 
 @pytest.fixture
-def client(mock_service, mock_database, mock_config, mock_load_config, mock_neo4j_init, mock_service_init):
+def client(
+    mock_service,
+    mock_database,
+    mock_config,
+    mock_load_config,
+    mock_neo4j_init,
+    mock_service_init,
+):
     """Create a test client with mocked dependencies."""
 
     def get_mock_service():
@@ -654,7 +661,15 @@ class TestErrorHandling:
 class TestAPIIntegration:
     """Integration tests for API endpoints."""
 
-    async def test_full_api_workflow(self, mock_service, mock_database, mock_config, mock_load_config, mock_neo4j_init, mock_service_init):
+    async def test_full_api_workflow(
+        self,
+        mock_service,
+        mock_database,
+        mock_config,
+        mock_load_config,
+        mock_neo4j_init,
+        mock_service_init,
+    ):
         """Test full API workflow with async client."""
 
         # Setup mock dependencies
@@ -672,7 +687,9 @@ class TestAPIIntegration:
         app.dependency_overrides[get_config] = get_mock_config
 
         try:
-            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            async with AsyncClient(
+                transport=ASGITransport(app=app), base_url="http://test"
+            ) as client:
                 # Test health check
                 mock_database.health_check.return_value = {"connected": True}
                 health_response = await client.get("/api/v1/health")

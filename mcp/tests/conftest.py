@@ -76,25 +76,28 @@ def mock_service_init(mock_service):
 @pytest.fixture
 def no_resilience(monkeypatch):
     """Disable resilience mechanisms (retries, circuit breakers) for testing."""
-    from offshore_leaks_mcp.resilience import RetryConfig, CircuitBreakerConfig
+    from offshore_leaks_mcp import resilience
+    from offshore_leaks_mcp.resilience import ErrorType
 
-    # Patch retry config to disable retries
-    monkeypatch.setattr('offshore_leaks_mcp.resilience.RetryConfig.__init__',
-                       lambda self, **kwargs: object.__setattr__(self, '__dict__', {
-                           'max_attempts': 1,
-                           'base_delay': 0.0,
-                           'max_delay': 0.0,
-                           'exponential_base': 1.0,
-                           'jitter': False,
-                           'backoff_strategy': 'fixed'
-                       }))
+    # Create a pass-through function that just executes the function directly
+    async def passthrough_execute(
+        self,
+        func,
+        error_type=ErrorType.UNKNOWN,
+        circuit_breaker_name=None,
+        *args,
+        **kwargs
+    ):
+        """Execute function without resilience mechanisms."""
+        return await func(*args, **kwargs)
 
-    # Patch circuit breaker config to be very tolerant
-    monkeypatch.setattr('offshore_leaks_mcp.resilience.CircuitBreakerConfig.__init__',
-                       lambda self, **kwargs: object.__setattr__(self, '__dict__', {
-                           'failure_threshold': 999,
-                           'recovery_timeout': 0.1,
-                           'expected_exception': Exception
-                       }))
+    # Patch the global resilience manager to just call functions directly
+    monkeypatch.setattr(
+        resilience.resilience_manager.__class__,
+        'execute_with_resilience',
+        passthrough_execute
+    )
 
     yield
+
+    # Cleanup is automatic with monkeypatch
