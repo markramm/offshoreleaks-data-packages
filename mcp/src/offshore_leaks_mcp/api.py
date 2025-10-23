@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Any, Optional
 
-from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi import Body, Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
@@ -223,6 +223,9 @@ async def search_entities(
         return APIResponse(
             data=response_data.dict(), query_time_ms=result.query_time_ms
         )
+    except (DatabaseError, QueryError, ValueError):
+        # Re-raise these exceptions to be handled by custom exception handlers
+        raise
     except Exception as e:
         logger.error(f"Entity search failed: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -390,8 +393,8 @@ async def analyze_network_patterns(
 
 @app.post("/api/v1/analysis/common-connections", response_model=APIResponse)
 async def find_common_connections(
-    node_ids: list[str],
-    relationship_types: Optional[list[str]] = Query(None),
+    node_ids: list[str] = Body(...),
+    relationship_types: Optional[list[str]] = Body(None),
     max_depth: int = Query(2, ge=1, le=4),
     limit: int = Query(20, ge=1, le=100),
     service: OffshoreLeaksService = Depends(get_service),
