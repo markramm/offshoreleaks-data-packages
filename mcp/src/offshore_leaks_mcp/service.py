@@ -61,9 +61,11 @@ class OffshoreLeaksService:
             )
 
             # Count total results (without pagination)
-            count_query = query.replace("RETURN e", "RETURN count(e) as total").split(
-                "SKIP"
-            )[0]
+            # Remove ORDER BY, SKIP, and LIMIT clauses for count query
+            count_query = query.replace("RETURN e", "RETURN count(e) as total")
+            count_query = (
+                count_query.split("ORDER BY")[0].split("SKIP")[0].split("LIMIT")[0]
+            )
             count_result = await self.database.execute_query(
                 count_query,
                 {k: v for k, v in query_params.items() if k not in ["limit", "offset"]},
@@ -117,9 +119,11 @@ class OffshoreLeaksService:
             )
 
             # Count total results (without pagination)
-            count_query = query.replace("RETURN o", "RETURN count(o) as total").split(
-                "SKIP"
-            )[0]
+            # Remove ORDER BY, SKIP, and LIMIT clauses for count query
+            count_query = query.replace("RETURN o", "RETURN count(o) as total")
+            count_query = (
+                count_query.split("ORDER BY")[0].split("SKIP")[0].split("LIMIT")[0]
+            )
             count_result = await self.database.execute_query(
                 count_query,
                 {k: v for k, v in query_params.items() if k not in ["limit", "offset"]},
