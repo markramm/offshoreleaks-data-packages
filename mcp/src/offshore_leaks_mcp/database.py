@@ -3,7 +3,7 @@
 import logging
 from typing import Any, Optional
 
-from neo4j import Driver, GraphDatabase
+from neo4j import Driver, GraphDatabase, basic_auth
 from pydantic import BaseModel
 
 from .config import Neo4jConfig
@@ -53,7 +53,7 @@ class Neo4jDatabase:
         try:
             self._driver = GraphDatabase.driver(
                 self.config.uri,
-                auth=(self.config.user, self.config.password),
+                auth=basic_auth(self.config.user, self.config.password),
                 max_connection_lifetime=self.config.max_connection_lifetime,
                 max_connection_pool_size=self.config.max_connection_pool_size,
                 connection_timeout=self.config.connection_timeout,

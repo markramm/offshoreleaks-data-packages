@@ -1,7 +1,8 @@
 """Shared test fixtures and configuration."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from offshore_leaks_mcp.config import Config, Neo4jConfig, ServerConfig
 from offshore_leaks_mcp.database import Neo4jDatabase
@@ -55,21 +56,23 @@ def mock_service(mock_database):
 @pytest.fixture
 def mock_load_config(mock_config):
     """Mock the load_config function to return test config."""
-    with patch('offshore_leaks_mcp.api.load_config', return_value=mock_config):
+    with patch("offshore_leaks_mcp.api.load_config", return_value=mock_config):
         yield mock_config
 
 
 @pytest.fixture
 def mock_neo4j_init(mock_database):
     """Mock Neo4jDatabase initialization to return mock database."""
-    with patch('offshore_leaks_mcp.api.Neo4jDatabase', return_value=mock_database):
+    with patch("offshore_leaks_mcp.api.Neo4jDatabase", return_value=mock_database):
         yield mock_database
 
 
 @pytest.fixture
 def mock_service_init(mock_service):
     """Mock OffshoreLeaksService initialization to return mock service."""
-    with patch('offshore_leaks_mcp.api.OffshoreLeaksService', return_value=mock_service):
+    with patch(
+        "offshore_leaks_mcp.api.OffshoreLeaksService", return_value=mock_service
+    ):
         yield mock_service
 
 
@@ -86,7 +89,7 @@ def no_resilience(monkeypatch):
         error_type=ErrorType.UNKNOWN,
         circuit_breaker_name=None,
         *args,
-        **kwargs
+        **kwargs,
     ):
         """Execute function without resilience mechanisms."""
         return await func(*args, **kwargs)
@@ -94,8 +97,8 @@ def no_resilience(monkeypatch):
     # Patch the global resilience manager to just call functions directly
     monkeypatch.setattr(
         resilience.resilience_manager.__class__,
-        'execute_with_resilience',
-        passthrough_execute
+        "execute_with_resilience",
+        passthrough_execute,
     )
 
     yield
