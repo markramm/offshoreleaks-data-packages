@@ -567,7 +567,7 @@ class TestErrorHandling:
 class TestServiceIntegration:
     """Integration tests for service layer."""
 
-    async def test_complete_search_workflow(self, test_config, no_resilience):
+    async def test_complete_search_workflow(self, no_resilience):
         """Test complete search workflow using service layer."""
         with patch("offshore_leaks_mcp.service.Neo4jDatabase") as mock_db_class:
             # Setup mock database

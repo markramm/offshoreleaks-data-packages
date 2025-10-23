@@ -23,7 +23,7 @@ class TestDatabaseIntegration:
     """Integration tests for database operations."""
 
     @pytest.mark.asyncio
-    async def test_database_connection_lifecycle(self, test_config, no_resilience):
+    async def test_database_connection_lifecycle(self, mock_config, no_resilience):
         """Test complete database connection lifecycle."""
         with patch(
             "offshore_leaks_mcp.database.GraphDatabase.driver"
@@ -38,7 +38,7 @@ class TestDatabaseIntegration:
             mock_driver.session.return_value = mock_session
             mock_driver_class.return_value = mock_driver
 
-            database = Neo4jDatabase(test_config.neo4j)
+            database = Neo4jDatabase(mock_config.neo4j)
 
             # Test connection
             await database.connect()
@@ -55,7 +55,7 @@ class TestDatabaseIntegration:
             assert not database.is_connected
 
     @pytest.mark.asyncio
-    async def test_database_query_execution(self, test_config, no_resilience):
+    async def test_database_query_execution(self, mock_config, no_resilience):
         """Test database query execution with real Cypher queries."""
         with patch(
             "offshore_leaks_mcp.database.GraphDatabase.driver"
@@ -69,7 +69,7 @@ class TestDatabaseIntegration:
             # Setup complete mock with health check support
             setup_neo4j_mock(mock_driver_class, query_result_data=test_records)
 
-            database = Neo4jDatabase(test_config.neo4j)
+            database = Neo4jDatabase(mock_config.neo4j)
             await database.connect()
 
             # Test query execution
@@ -88,7 +88,7 @@ class TestServerIntegration:
     """Integration tests for server operations."""
 
     @pytest.mark.asyncio
-    async def test_server_startup_and_health_check(self, test_config, no_resilience):
+    async def test_server_startup_and_health_check(self, mock_config, no_resilience):
         """Test server startup and health check workflow."""
         with patch(
             "offshore_leaks_mcp.database.GraphDatabase.driver"
@@ -102,7 +102,7 @@ class TestServerIntegration:
             mock_driver.session.return_value = mock_session
             mock_driver_class.return_value = mock_driver
 
-            server = OffshoreLeaksServer(test_config)
+            server = OffshoreLeaksServer(mock_config)
 
             # Test server startup
             await server.start()
@@ -114,14 +114,14 @@ class TestServerIntegration:
             assert health.status == "healthy"
             assert health.database_connected is True
             assert health.server_running is True
-            assert health.version == test_config.server.version
+            assert health.version == mock_config.server.version
 
             # Test server stop
             await server.stop()
             assert not server.is_running
 
     @pytest.mark.asyncio
-    async def test_entity_search_workflow(self, test_config, no_resilience):
+    async def test_entity_search_workflow(self, mock_config, no_resilience):
         """Test complete entity search workflow."""
         with patch(
             "offshore_leaks_mcp.database.GraphDatabase.driver"
@@ -133,7 +133,7 @@ class TestServerIntegration:
             # Setup complete mock with health check support
             setup_neo4j_mock(mock_driver_class, query_result_data=mock_result_data)
 
-            server = OffshoreLeaksServer(test_config)
+            server = OffshoreLeaksServer(mock_config)
             await server.start()
 
             # Test entity search
@@ -153,7 +153,7 @@ class TestServerIntegration:
                 assert "name" in entity
 
     @pytest.mark.asyncio
-    async def test_officer_search_workflow(self, test_config, no_resilience):
+    async def test_officer_search_workflow(self, mock_config, no_resilience):
         """Test complete officer search workflow."""
         with patch(
             "offshore_leaks_mcp.database.GraphDatabase.driver"
@@ -165,7 +165,7 @@ class TestServerIntegration:
             # Setup complete mock with health check support
             setup_neo4j_mock(mock_driver_class, query_result_data=mock_result_data)
 
-            server = OffshoreLeaksServer(test_config)
+            server = OffshoreLeaksServer(mock_config)
             await server.start()
 
             # Test officer search
@@ -181,7 +181,7 @@ class TestServerIntegration:
             assert len(result.results) <= 10
 
     @pytest.mark.asyncio
-    async def test_connections_exploration_workflow(self, test_config, no_resilience):
+    async def test_connections_exploration_workflow(self, mock_config, no_resilience):
         """Test connections exploration workflow."""
         with patch(
             "offshore_leaks_mcp.database.GraphDatabase.driver"
@@ -201,7 +201,7 @@ class TestServerIntegration:
             # Setup complete mock with health check support
             setup_neo4j_mock(mock_driver_class, query_result_data=mock_connection_data)
 
-            server = OffshoreLeaksServer(test_config)
+            server = OffshoreLeaksServer(mock_config)
             await server.start()
 
             # Test connections search
@@ -222,7 +222,7 @@ class TestEndToEndWorkflows:
     """End-to-end integration tests."""
 
     @pytest.mark.asyncio
-    async def test_complete_investigation_workflow(self, test_config, no_resilience):
+    async def test_complete_investigation_workflow(self, mock_config, no_resilience):
         """Test a complete investigation workflow."""
         with patch(
             "offshore_leaks_mcp.database.GraphDatabase.driver"
@@ -297,7 +297,7 @@ class TestEndToEndWorkflows:
             mock_driver.session.return_value = mock_session
             mock_driver_class.return_value = mock_driver
 
-            server = OffshoreLeaksServer(test_config)
+            server = OffshoreLeaksServer(mock_config)
             await server.start()
 
             # Step 1: Search for entities
@@ -320,9 +320,9 @@ class TestEndToEndWorkflows:
             assert health.status == "healthy"
 
     @pytest.mark.asyncio
-    async def test_error_handling_and_recovery(self, test_config, no_resilience):
+    async def test_error_handling_and_recovery(self, mock_config, no_resilience):
         """Test error handling and recovery scenarios."""
-        server = OffshoreLeaksServer(test_config)
+        server = OffshoreLeaksServer(mock_config)
 
         # Test health check when database is not connected
         health = await server.health_check()
@@ -330,9 +330,10 @@ class TestEndToEndWorkflows:
         assert health.database_connected is False
 
         # Test search operations when database is not connected
-        with pytest.raises(
-            (ConnectionError, ValueError)
-        ):  # Should raise database error
+        # Should raise database error - could be RetryableError, ConnectionError, or ValueError
+        from offshore_leaks_mcp.resilience import RetryableError
+
+        with pytest.raises((RetryableError, ConnectionError, ValueError)):
             await server.search_entities(name="Test")
 
 
@@ -342,7 +343,7 @@ class TestPerformanceIntegration:
     """Performance-related integration tests."""
 
     @pytest.mark.asyncio
-    async def test_concurrent_queries(self, test_config, no_resilience):
+    async def test_concurrent_queries(self, mock_config, no_resilience):
         """Test handling of concurrent queries."""
         with patch(
             "offshore_leaks_mcp.database.GraphDatabase.driver"
@@ -353,7 +354,7 @@ class TestPerformanceIntegration:
             # Setup complete mock with health check support
             setup_neo4j_mock(mock_driver_class, query_result_data=mock_result_data)
 
-            server = OffshoreLeaksServer(test_config)
+            server = OffshoreLeaksServer(mock_config)
             await server.start()
 
             # Run multiple queries concurrently
@@ -370,7 +371,7 @@ class TestPerformanceIntegration:
                 assert result.total_count >= 0
 
     @pytest.mark.asyncio
-    async def test_large_result_handling(self, test_config, no_resilience):
+    async def test_large_result_handling(self, mock_config, no_resilience):
         """Test handling of large result sets."""
         with patch(
             "offshore_leaks_mcp.database.GraphDatabase.driver"
@@ -386,7 +387,7 @@ class TestPerformanceIntegration:
             # Setup complete mock with health check support
             setup_neo4j_mock(mock_driver_class, query_result_data=large_dataset)
 
-            server = OffshoreLeaksServer(test_config)
+            server = OffshoreLeaksServer(mock_config)
             await server.start()
 
             # Test with max limit

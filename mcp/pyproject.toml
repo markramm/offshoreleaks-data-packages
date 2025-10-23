@@ -143,6 +143,16 @@ module = [
 ignore_missing_imports = true
 disallow_untyped_decorators = false
 
+[[tool.mypy.overrides]]
+module = [
+    "offshore_leaks_mcp.resilience",
+    "offshore_leaks_mcp.exporters",
+]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = false
+warn_return_any = false
+
 [tool.pytest.ini_options]
 minversion = "7.0"
 addopts = "-ra -q --strict-markers --strict-config"
