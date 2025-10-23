@@ -1,1 +1,13 @@
 .DS_Store
+
+# Data files - DO NOT COMMIT
+*.csv
+*.dump
+*.zip
+data/
+neo4j-import/
+
+# Test and temporary files
+test_*.py
+simple_api.py
+CURL_TEST_RESULTS.md

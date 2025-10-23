@@ -158,11 +158,30 @@ class Neo4jDatabase:
 
                     result = session.run(query, parameters, timeout=timeout)
                     records = [record.data() for record in result]
+                    # Get summary after consuming all records
+                    result_summary = result.consume()
+
+                    # Convert SummaryCounters to dict
+                    counters = result_summary.counters
+                    counters_dict = {
+                        "nodes_created": counters.nodes_created,
+                        "nodes_deleted": counters.nodes_deleted,
+                        "relationships_created": counters.relationships_created,
+                        "relationships_deleted": counters.relationships_deleted,
+                        "properties_set": counters.properties_set,
+                        "labels_added": counters.labels_added,
+                        "labels_removed": counters.labels_removed,
+                        "indexes_added": counters.indexes_added,
+                        "indexes_removed": counters.indexes_removed,
+                        "constraints_added": counters.constraints_added,
+                        "constraints_removed": counters.constraints_removed,
+                    }
+
                     summary = {
-                        "query_type": result.summary().query_type,
-                        "counters": dict(result.summary().counters),
-                        "result_available_after": result.summary().result_available_after,
-                        "result_consumed_after": result.summary().result_consumed_after,
+                        "query_type": result_summary.query_type,
+                        "counters": counters_dict,
+                        "result_available_after": result_summary.result_available_after,
+                        "result_consumed_after": result_summary.result_consumed_after,
                     }
 
                     end_time = time.time()
